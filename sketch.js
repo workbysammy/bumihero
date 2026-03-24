@@ -1,7 +1,7 @@
 let assetsLoaded = false;
 let bumiheroStarted = false;
 
-let devMode = false; //ganti tru kl mau skippoy
+let devMode = true; //ganti tru kl mau skippoy
 
 let canvas;
 let target;
@@ -19,7 +19,7 @@ let result = null;
 let resultStay = 0;
 
 let song;
-let right;
+let success;
 let error;
 let happy;
 let hover;
@@ -31,7 +31,7 @@ let unlockHint = false;
 let showHint = false;
 let unlockTime = 0;
 let hintDelay = 2000;
-let hintDuration = 2000;
+let hintDuration = 1500;
 let hintSound = false;
 
 let lastHintTime = 0;
@@ -77,6 +77,7 @@ let nextCalibrateStep = null;
 // calib intro
 let calibrateStep = 1;
 let introFinished = false;
+let introSoundPlayed = false;
 // calib hand
 let checkingStartTime = 0;
 let handValid = false;
@@ -85,10 +86,12 @@ let holdDuration = 3000; //
 let calibrateFinished = false;
 let calibratePhase = "intro";
 let phaseStartTime = 0;
+let calibHandSound = false;
 
 let showCorrectIcon = false;
 let correctStartTime = 0;
 let correctDuration = 3000; //
+let correctSoundPlayed = false;
 // calib open
 let OpenChecking = false;
 let OpenStartTime = 0;
@@ -96,8 +99,10 @@ let OpenDuration = 2000;
 let openIntro = true;
 let openIntroStart = 0;
 let openIntroDuration = 3000; //durasi gif open
+let calibOpenSound = false;
 
 let pickPhase = "preview";
+let calibPinchSound = false;
 // calib pinch
 let pinchChecking = false;
 let pinchStartTime = 0;
@@ -105,8 +110,12 @@ let pinchDuration = 1500;
 let pinchIntro = true;
 let pinchIntroStart = 0;
 let pinchIntroDuration = 3000; //durasi gif pinch
+
 // calib pick trash
 let calibPickPlayed = false;
+let pickStartSoundPlayed = false;
+let pickEndSoundPlayed = false;
+
 let calibPickFinished = false;
 let calibrateTrash;
 let calibratePinched = false;
@@ -117,6 +126,9 @@ let pickDuration = 100; //durasi hold pick
 // calibthrow
 let calibDragPlayed = false;
 let calibDragFinished = false;
+
+let calibThrowPlayed = false;
+let dragEndSoundPlayed = false;
 
 let dragDone = false;
 let dragChecking = false;
@@ -136,12 +148,16 @@ let handMessage = "Arahkan tangan ke dalam kotak";
 
 // calib transition
 let calibTransPlayed = false;
+let transSoundPlayed = false;
 // not first time user
 let hasCompletedTutorial = false;
 
 let mulaiUnlocked = false;
 let mulaiDelay = 3000;
 let mulaiStartTime = 0;
+let mulaiClicked = false;
+
+let skipClicked = false;
 
 let playUnlocked = false;
 let playDelay = 2000;
@@ -158,22 +174,101 @@ let areaLevels = {
   sekolah: { start: 4, end: 6 },
   rekreasi: { start: 7, end: 9 }
 };
-let isCampaignMode = true;
+let areaScoreConfig = {
+  perumahan: {      // max 52
+    high: 42,       // 80% dari 52
+    mid: 26         // 50% dari 52
+  },
+
+  sekolah: {        // max 64
+    high: 51,       // 80% dari 64
+    mid: 32         // 50% dari 64
+  },
+
+  rekreasi: {       // max 68
+    high: 54,       // 80% dari 68
+    mid: 34         // 50% dari 68
+  },
+
+  full: {           // max 184
+    high: 148,      // 80% dari 184
+    mid: 92         // 50% dari 184
+  }
+};
 
 let levelStarted = false;
+let levelLoaded = false;
+
+let calibrateFromChoose = false;
+
+let berandaCooldown = false;
+let tutorCooldown = false;
 
 let minHandHeight = 94; // hand too far if smaller
 let maxHandHeight = 122; // hand too close if bigger
 
 // safezone
 
+// delay tangan
+let inputLocked = false;
+let inputUnlockTime = 0;
+
+  // BGM
+let currentMusic = null;
+let lastGameState = "";
+// LEVEL INTRO
+let showLevelIntro = false;
+let levelIntroStart = 0;
+let levelIntroDuration = 2000;
+
+let levelIntroImages = [];
+let impactGood, impactMid, impactBad;
+let lihatskor;
+let impactStartTime = 0;
+
+let rain;
+let bird;
+let river;
+let impactSoundPlayed = false;
+let currentImpactSound = null;
+
+// calib bg
+let bodySegmentation;
+let segmentation;
+
+let contrastScore = 0;
+let brightnessAvg = 0;
+let bgComplexity = 0;
+
+let isReady = false;
+let isTooDark = false;
+let isTooBright = false;
+let isBackgroundBusy = false;
+let goodContrast = false;
+
+let segOptions = {
+  maskType: "background",
+};
+
+let readyFrames = 0;
+let REQUIRED_FRAMES = 30; // ~1 second at 30fps
+
+let calibTooDark, calibTooBright, calibBusy, calibContrast, calibGood;
+let isSegmentationRunning = false;
+
+
 function preload() {
+  calibTooDark = loadImage("calibrate/BG_GELAP.png");
+  calibTooBright = loadImage("calibrate/BG_TERANG.png");
+  calibBusy = loadImage("calibrate/BG_RAMAI.png");
+  calibContrast = loadImage("calibrate/BG_CONTRAST.png");
+  calibGood = loadImage("calibrate/BG_GOOD.png");
   // handPose = ml5.handPose({ flipped: true });
   loading = loadImage("background/LOADING.gif");
   font1 = loadFont("font/Qilka.otf");
-  song = loadSound("sfx/doodle.mp3");
+ 
   // background
-  landingBg = loadImage("background/LANDING PAGE.png");
+  landingBg = loadImage("background/LANDING.png");
   jedaPage = loadImage("background/JEDA_PAGE.png");
   bg1 = loadImage("background/DAPUR.png");
   bg2 = loadImage("background/HALAMAN.png");
@@ -280,16 +375,21 @@ function preload() {
   win3 = loadImage("background/BRONZE_PAGE.gif");
 
   // sfx
+  calibpop = loadSound("sfx/pop.mp3");
   click = loadSound("sfx/click3.mp3");
   claim = loadSound("sfx/claim2.mp3");
   unlocked = loadSound("sfx/bantuan_unlock.mp3");
   reward = loadSound("sfx/reward.mp3");
   win = loadSound("sfx/win_sound.mp3");
-  right = loadSound("sfx/correct.mp3");
+  success = loadSound("sfx/correct.mp3");
   error = loadSound("sfx/incorrect.mp3");
+  readytoplay = loadSound("sfx/readytoplay2.mp3");
+  playvideo = loadSound("sfx/videoon.mp3");
+
 
   calibbg = loadImage("calibrate/CALIB_BG.png");
   calib1 = loadImage("calibrate/CALIB_1.png");
+  calibbegron = loadImage("calibrate/CALIB_BEGRON.png");
   calib3 = loadImage("calibrate/CALIB_3.png");
   calib4 = loadImage("calibrate/CALIB_4.png");
   calib5 = loadImage("calibrate/CALIB_5.png");
@@ -297,7 +397,7 @@ function preload() {
 
   calibintro = loadImage("calibrate/CALIB_INTRO.gif");
   calibpick = loadImage("calibrate/PICK_TUTORIAL2.gif");
-  calibdrag = loadImage("calibrate/THROW_TUTORIAL2.gif");
+  calibdrag = loadImage("calibrate/REVISED_THROW.gif");
   calibtrans = loadImage("calibrate/CALIB_FINISHED.gif");
 
   hi5 = loadImage("calibrate/HI5.png");
@@ -313,6 +413,27 @@ function preload() {
   chooseBg = loadImage("choose/CHOOSE_LEVEL.png");
   tutor = loadImage("choose/TUTOR_ICON.png");
   beranda = loadImage("choose/BERANDA_ICON.png");
+
+// bgm
+  landingBgm = loadSound("sfx/landingBgm.mp3");
+  // levelBgm = loadSound("sfx/doodle.mp3");
+  houseBgm = loadSound("sfx/houseBgm.mp3");
+  schoolBgm = loadSound("sfx/schoolBgm.mp3");
+  rekreasiBgm = loadSound("sfx/rekreasiBgm.mp3");
+  rain = loadSound("sfx/RAIN.mp3");
+  bird = loadSound("sfx/BIRD.mp3");
+  river = loadSound("sfx/RIVER.mp3");
+// level intro
+  levelIntroImages[1] = loadImage("ui/lv1.png");
+  levelIntroImages[4] = loadImage("ui/lv2.png");
+  levelIntroImages[7] = loadImage("ui/lv3.png");
+  // impact score
+    // impact images (sesuai score)
+  impactGood = loadImage("win/GOODIMPACT.gif"); 
+  impactMid  = loadImage("win/MIDIMPACT.gif");   
+  impactBad  = loadImage("win/BANJIR.gif");    
+  // tombol ke win screen
+  lihatskor = loadImage("ui/LIATSKOR_BUTTON.png");
 }
 
 function setup() {
@@ -323,10 +444,14 @@ function setup() {
   video = createCapture(VIDEO, { flipped: true });
   video.size(640, 480);
   video.position(canvas.width + 100, 0);
-  // video.hide();
+  video.hide();
 
   handPose = ml5.handPose({ flipped: true }, () => {
     handPose.detectStart(video, gotHands);
+
+    bodySegmentation = ml5.bodySegmentation("SelfieSegmentation", {
+  maskType: "background",
+});
 
     assetsLoaded = true;
     // gameState = "landing";
@@ -357,16 +482,12 @@ function setup() {
   };
 
   if (devMode) {
-    currentLevel = 1;
+    currentLevel = 9;
     loadLevel(currentLevel);
     gameState = "play";
-
-    //     gameState = "calibrate";
-    // calibrateStep = 7;
   }
-  // landing = createVideo("background/LANDING.mp4");
-  // landing.hide();
-  // landing.loop();
+
+
 }
 function draw() {
 
@@ -393,10 +514,39 @@ function draw() {
     text("Loading" + loadingDots, width / 2, height / 2 + 70);
     return;
   }
+    // bgm logic
+  if (gameState !== lastGameState) {
+
+    if (gameState === "landing" || gameState === "calibrate" || gameState === "choose") {
+      playMusic(landingBgm);
+    } 
+    
+    else if (gameState === "play") {
+      playMusic(getLevelMusic(currentLevel));
+    }
+     else if (gameState === "impact") {
+    if (currentMusic) {
+      currentMusic.stop();
+      currentMusic = null;
+    }
+    impactSoundPlayed = false;
+  }
+
+  else if (gameState === "win") {
+
+    if (currentImpactSound && currentImpactSound.isPlaying()) {
+      currentImpactSound.stop();
+      currentImpactSound = null;
+    }
+  }
+
+    lastGameState = gameState;
+  }
 
   imageMode(CENTER);
   textFont(font1);
   image(video, width / 2, height / 2, width, height);
+  console.log(gameState);
   if (gameState === "landing") {
     showLandingPage();
     detectHandStartButton();
@@ -410,30 +560,20 @@ function draw() {
     calibratePage();
   } else if (gameState === "play") {
 
-    
+      if (!levelLoaded) {
+    loadLevel(currentLevel);
+    levelLoaded = true;
+    levelStarted = false;
+
+      if (currentLevel === 1 || currentLevel === 4 || currentLevel === 7) {
+    showLevelIntro = true;
+    levelIntroStart = millis();
+    inputLocked = true;
+  }
+  }
+
     playGame();
 
-//     if (hands.length > 0) {
-
-//   let status = getDistanceStatus(hands[0]);
-
-//   fill(255);
-//   textSize(28);
-//   textAlign(CENTER);
-
-//   if (status === "tooClose") {
-//     text("⚠ Mundur sedikit dari kamera", width/2, height/2);
-//   }
-
-//   else if (status === "tooFar") {
-//     text("⚠ Dekatkan tangan ke kamera", width/2, height/2);
-//   }
-
-//   else {
-//     text("✅ Posisi Sudah Optimal", width/2, height/2);
-//   }
-
-// }
     
       if (showHint) {
         let elapsed = millis() - unlockTime;
@@ -459,11 +599,25 @@ function draw() {
     else if (gameState === "reward") {
       rewardScreen();
       detectHandClaimButton();
-  } else if (gameState === "win") {
+  } else if (gameState === "impact") {
+  impactScreen();
+
+    if (!impactSoundPlayed) {
+    playImpactSound();
+    impactSoundPlayed = true;
+  }
+
+    if (!isFading && millis() - impactStartTime > 3000) {
+    inputLocked = false;
+    detectHandImpactButton();
+  }
+
+} else if (gameState === "win") {
     winScreen();
   } else if (gameState === "choose") {
     chooseLevel();
   }
+  
 
   if (hands.length > 0) {
     if (
@@ -475,46 +629,9 @@ function draw() {
       handVisual();
     }
   }
-// 🔍 SAFE ZONE DEBUG (temporary)
-// if (hands.length > 0) {
-
-//   let hand = hands[0];
-//   let xs = [];
-//   let ys = [];
-
-//   for (let i = 0; i < hand.keypoints.length; i++) {
-//     xs.push(hand.keypoints[i].x);
-//     ys.push(hand.keypoints[i].y);
-//   }
-
-//   let minX = Math.min(...xs);
-//   let maxX = Math.max(...xs);
-//   let minY = Math.min(...ys);
-//   let maxY = Math.max(...ys);
-
-//   let centerX = (minX + maxX) / 2;
-//   let centerY = (minY + maxY) / 2;
-
-//   let margin = 40;
-
-//   // Draw safe frame box
-//   noFill();
-//   stroke(0, 255, 0);
-//   strokeWeight(2);
-//   rect(margin, margin, width - margin * 2, height - margin * 2);
-
-//   // Draw hand center
-//   fill(255, 0, 0);
-//   noStroke();
-//   circle(centerX, centerY, 10);
-
-//   handVisual();
-
-// }
-
 
   if (isFading) {
-    fadeAlpha += 8 * fadeDirection;
+    fadeAlpha += 10 * fadeDirection;
 
     if (fadeAlpha >= 255) {
       fadeAlpha = 255;
@@ -533,7 +650,26 @@ function draw() {
     rect(0, 0, width, height);
   }
 }
-
+function getLevelMusic(level) {
+  if (level >= 1 && level <= 3) {
+    return houseBgm;
+  } 
+  else if (level >= 4 && level <= 6) {
+    return schoolBgm;
+  } 
+  else if (level >= 7 && level <= 9) {
+    return rekreasiBgm;
+  }
+}
+function playMusic(track) {
+  if (currentMusic !== track) {
+    if (currentMusic) {
+      currentMusic.stop();
+    }
+    currentMusic = track;
+    currentMusic.loop();
+  }
+}
 function getHandBoxHeight(hand) {
   let keypoints = hand.keypoints;
 
@@ -576,43 +712,6 @@ function startBumiHero() {
     console.log("Assets ready → Game Start");
   }, 100);
 }
-// function resetGame(targetState = "play") {
-//   currentLevel = 1;
-//   score = 0;
-//   winPlayed = false;
-//   if (!song.isPlaying()) {
-//     song.loop();
-//   }
-//   resetLevelData();
-// gameState = targetState;
-// }
-// function resetLevelData() {
-//   trashs = [];
-//   yPos = 0.0;
-
-//   pinchedTrash = null;
-//   result = null;
-//   resultStay = 0;
-
-//   unlockHint = false;
-//   showHint = false;
-//   hintSound = false;
-
-//   lastHintTime = 0;
-//   lastJedaTime = 0;
-//   jedaVisible = false;
-
-//   rewardShow = 0;
-//   claimUnlocked = false;
-
-//   levelCompleted = false;
-//   winPlayed = false;
-//   winReady = false;
-//   levelCompleted = false;
-
-//   score = 0;
-// }
-
 // draw landing
 function fadeLandingPage() {
   if (bgFade < 255) {
@@ -667,9 +766,13 @@ function detectHandStartButton() {
 }
 function startGame() {
 
-  song.loop();
+  // song.loop();
   click.play();
   winPlayed = false;
+
+//   if (!song.isPlaying()) {
+//   song.loop();
+// }
 
   if (hasCompletedTutorial) {
 
@@ -677,19 +780,24 @@ function startGame() {
 
   } else {
 
-    calibrateStep = 1;
-    introFinished = false;
 
-    calibintro.play();
-    calibintro.setFrame(0);
-
-    gameState = "calibrate";
+calibrateStep = 1;
+    resetCalibrateState();
+calibrateFromChoose = false;
+gameState = "calibrate";
   }
 
 }
-
 // draw calib
 function resetCalibrateState() {
+
+  nextCalibrateStep = null;
+
+  introFinished = false;
+
+  calibintro.setFrame(0);
+  calibintro.play();
+
   calibratePhase = "intro";
   phaseStartTime = 0;
 
@@ -710,151 +818,65 @@ function calibratePage() {
     resetCalibrateState();
     nextCalibrateStep = null;
   }
+    // 🔥 HANDLE SEGMENTATION ON/OFF
+  if (calibrateStep === 2 && !isSegmentationRunning) {
+    bodySegmentation.detectStart(video, gotSegmentationResults);
+    isSegmentationRunning = true;
+  }
+
+  if (calibrateStep !== 2 && isSegmentationRunning) {
+    bodySegmentation.detectStop();
+    isSegmentationRunning = false;
+  }
+
   if (calibrateStep === 1) {
     showCalibrateIntro();
   } else if (calibrateStep === 2) {
-    showCalibratehand();
+    showCalibrateBg();
   } else if (calibrateStep === 3) {
-    showCalibrateOpen();
+    showCalibratehand();
   } else if (calibrateStep === 4) {
-    showCalibratePinch();
+    showCalibrateOpen();
   } else if (calibrateStep === 5) {
-    showCalibratePick();
+    showCalibratePinch();
   } else if (calibrateStep === 6) {
-    showCalibrateThrow();
+    showCalibratePick();
   } else if (calibrateStep === 7) {
+    showCalibrateThrow();
+  } else if (calibrateStep === 8) {
     showCalibrateTransition();
   }
 }
 function showCalibrateIntro() {
+    if (!introSoundPlayed) {
+    calibpop.play();
+    introSoundPlayed = true;
+  }
+
   image(calibbg, width / 2, height / 2, width, height);
 
   image(calibintro, width / 2, height / 2, width, height);
 
-  if (!introFinished && calibintro && calibintro.numFrames) {
-    if (calibintro.getCurrentFrame() === calibintro.numFrames() - 1) {
-      calibintro.pause();
-      introFinished = true;
-      nextCalibrateStep = 2;
-    }
-  }
+if (!introFinished &&
+    calibintro.getCurrentFrame() >= calibintro.numFrames() - 2) {
+
+  calibintro.pause();
+  introFinished = true;
+  introSoundPlayed = false;
+  nextCalibrateStep = 2;
 }
-// function showCalibratehand() {
-//   image(calib1, width / 2, height / 2, width, height);
+}
 
-//   // ================= INTRO =================
-//   if (calibratePhase === "intro") {
-//     image(hi5, width / 2, height / 2, 114, 113);
-
-//     if (phaseStartTime === 0) {
-//       phaseStartTime = millis();
-//     }
-
-//     if (millis() - phaseStartTime >= openIntroDuration) {
-//       calibratePhase = "checking";
-//       phaseStartTime = 0;
-//     }
-
-//     return;
-//   }
-
-//   // ================= CORRECT =================
-//   if (calibratePhase === "correct") {
-//     image(correct, width / 2, height / 2, 100, 100);
-
-//     if (millis() - phaseStartTime >= correctDuration) {
-//       calibratePhase = "done";
-//       phaseStartTime = 0;
-//     }
-
-//     return;
-//   }
-
-//   // ================= DONE =================
-//   if (calibratePhase === "done") {
-//     resetCalibrateState();
-//     nextCalibrateStep = 3;
-//     return;
-//   }
-
-//   // ================= CHECKING =================
-
-//   let left = 71;
-//   let right = 569;
-//   let top = 105;
-//   let bottom = 450;
-
-//   let boxColor = color(255, 0, 0);
-
-//   if (hands.length === 0) {
-//     handMessage = "Tangan tidak terdeteksi";
-//     handValid = false;
-//     handHoldStart = 0;
-//   } else {
-//     let minX = Infinity;
-//     let maxX = -Infinity;
-//     let minY = Infinity;
-//     let maxY = -Infinity;
-
-//     for (let p of hands[0].keypoints) {
-//       if (p.x < minX) minX = p.x;
-//       if (p.x > maxX) maxX = p.x;
-//       if (p.y < minY) minY = p.y;
-//       if (p.y > maxY) maxY = p.y;
-//     }
-
-//     let inFrame =
-//       minX > left - 15 &&
-//       maxX < right + 15 &&
-//       minY > top - 15 &&
-//       maxY < bottom + 15;
-
-//     if (!inFrame) {
-//       handValid = false;
-//       handHoldStart = 0;
-//       handMessage = "Pastikan seluruh tangan berada di dalam kotak";
-//     } else {
-//       boxColor = color(0, 255, 0);
-
-//       if (!handValid) {
-//         handHoldStart = millis();
-//         handValid = true;
-//       }
-
-//       handMessage = "Memeriksa pose...";
-
-//       let holdTime = millis() - handHoldStart;
-
-//       if (holdTime >= holdDuration) {
-//         calibratePhase = "correct";
-//         phaseStartTime = millis();
-//         handMessage = "";
-//       }
-//     }
-//   }
-
-//   // SAFEZONE
-//   stroke(boxColor);
-//   strokeWeight(3);
-//   drawingContext.setLineDash([10, 10]);
-//   noFill();
-//   rect(left, top, right - left, bottom - top);
-//   drawingContext.setLineDash([]);
-
-//   // TEXT
-//   if (handMessage !== "") {
-//     textSize(18);
-//     fill(255);
-//     stroke(89, 26, 41);
-//     strokeWeight(4);
-//     text(handMessage, width / 2, height / 2);
-//   }
-// }
 function showCalibratehand() {
-  image(calib1, width / 2, height / 2, width, height);
+      image(calib1, width / 2, height / 2, width, height);
+      if (!calibHandSound) {
+    calibpop.play();
+    calibHandSound = true;
+  }
 
   // ================= INTRO =================
   if (calibratePhase === "intro") {
+
     image(hi5, width / 2, height / 2, 114, 113);
 
     if (phaseStartTime === 0) {
@@ -871,6 +893,12 @@ function showCalibratehand() {
 
   // ================= CORRECT =================
   if (calibratePhase === "correct") {
+
+     if (!correctSoundPlayed) {
+    success.play();
+    correctSoundPlayed = true;
+  }
+
     image(correct, width / 2, height / 2 - 20, 100, 100);
 
     textSize(18);
@@ -878,7 +906,7 @@ function showCalibratehand() {
     stroke(89, 26, 41);
     strokeWeight(4);
     text(
-  "Tetap di posisi ini ya,\nsupaya permainan lancar!",
+  "Tetap di posisi ini ya,\nbiar permainannya lancar!",
   width / 2,
   height / 2 + 52
 );
@@ -894,16 +922,20 @@ function showCalibratehand() {
   // ================= DONE =================
   if (calibratePhase === "done") {
     resetCalibrateState();
-    nextCalibrateStep = 3;
+    nextCalibrateStep = 4;
+    calibHandSound = false;
     return;
   }
 
   // ================= CHECKING =================
 
-  let left = 71;
-  let right = 569;
-  let top = 105;
-  let bottom = 450;
+let safeBoxWidth = 540;
+let safeBoxHeight = 380;
+
+let left = (width - safeBoxWidth) / 2;
+let right = left + safeBoxWidth;
+let top = (height - safeBoxHeight) / 2;
+let bottom = top + safeBoxHeight;
 
   let boxColor = color(255, 0, 0);
   handMessage = "";
@@ -934,7 +966,7 @@ function showCalibratehand() {
     // ======== HITUNG DISTANCE (HEIGHT) ========
     let handHeight = maxY - minY;
 
-    // 🔥 Tampilkan di console biar kamu bisa ukur threshold
+
     console.log("Hand Height:", handHeight);
 
     // ================= CHECK SAFEZONE =================
@@ -962,14 +994,14 @@ function showCalibratehand() {
 
       if (handHeight < minHandHeight) {
         handMessage = "Dekatkan tangan sedikit";
-        boxColor = color(0, 0, 255);
+        boxColor = color(255, 255, 0);
         handValid = false;
         handHoldStart = 0;
       }
 
       else if (handHeight > maxHandHeight) {
         handMessage = "Mundur sedikit dari kamera";
-        boxColor = color(255, 165, 0);
+        boxColor = color(255, 255, 0);
         handValid = false;
         handHoldStart = 0;
       }
@@ -983,27 +1015,43 @@ function showCalibratehand() {
           handValid = true;
         }
 
-        handMessage = "Bagus! Tahan 3 detik…";
-
         let holdTime = millis() - handHoldStart;
 
-        if (holdTime >= holdDuration) {
-          calibratePhase = "correct";
-          phaseStartTime = millis();
-          handMessage = "";
-        }
+// hitung sisa waktu (3 detik)
+let remainingTime = ceil((holdDuration - holdTime) / 1000);
+
+// tampilkan countdown
+if (remainingTime > 0) {
+  handMessage = "Bagus, tahan...";
+  
+  textSize(40);
+  fill(255);
+  stroke(89, 26, 41);
+  strokeWeight(6);
+  textAlign(CENTER);
+  text(remainingTime, width / 2, height / 2 + 40);
+}
+
+if (holdTime >= holdDuration) {
+  calibratePhase = "correct";
+  phaseStartTime = millis();
+  handMessage = "";
+  correctSoundPlayed = false;
+}
       }
     }
   }
 
   // ================= SAFEZONE DRAW =================
 
-  stroke(boxColor);
-  strokeWeight(3);
-  drawingContext.setLineDash([10, 10]);
-  noFill();
-  rect(left, top, right - left, bottom - top);
-  drawingContext.setLineDash([]);
+stroke(boxColor);
+strokeWeight(3);
+drawingContext.setLineDash([10, 10]);
+noFill();
+rect(left, top, safeBoxWidth, safeBoxHeight);
+drawingContext.setLineDash([]);
+
+  image(calib1, width / 2, height / 2, width, height);
 
   // ================= TEXT FEEDBACK =================
 
@@ -1018,6 +1066,12 @@ function showCalibratehand() {
 }
 
 function showCalibrateOpen() {
+    if (!calibOpenSound) {
+   calibpop.play();
+    calibOpenSound = true;
+  }
+
+
   image(calib3, width / 2, height / 2, width, height);
 
   // ================= INTRO =================
@@ -1038,6 +1092,12 @@ function showCalibrateOpen() {
 
   // ================= CORRECT =================
   if (calibratePhase === "correct") {
+
+    if (!correctSoundPlayed) {
+    success.play();
+    correctSoundPlayed = true;
+  }
+
     image(correct, width / 2, height / 2, 100, 100);
 
     if (millis() - phaseStartTime >= correctDuration) {
@@ -1050,19 +1110,61 @@ function showCalibrateOpen() {
 
   // ================= DONE =================
   if (calibratePhase === "done") {
-    nextCalibrateStep = 4;
+    nextCalibrateStep = 5;
+    calibOpenSound = false;
     return;
   }
 
   // ================= CHECKING =================
+let safeBoxWidth = 540;
+let safeBoxHeight = 380;
 
-  if (hands.length === 0) {
-    handMessage = "Tangan tidak terdeteksi";
+let left = (width - safeBoxWidth) / 2;
+let right = left + safeBoxWidth;
+let top = (height - safeBoxHeight) / 2;
+let bottom = top + safeBoxHeight;
+
+let boxColor = color(255, 0, 0);
+handMessage = "";
+
+ if (hands.length === 0) {
+
+  handValid = false;
+  handHoldStart = 0;
+  handMessage = "Tangan tidak terdeteksi";
+
+} else {
+
+  let kp = hands[0].keypoints;
+
+  // ===== HITUNG BOUNDING BOX =====
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+
+  for (let p of kp) {
+    minX = min(p.x, minX);
+    maxX = max(p.x, maxX);
+    minY = min(p.y, minY);
+    maxY = max(p.y, maxY);
+  }
+
+  let inFrame =
+    minX > left - 15 &&
+    maxX < right + 15 &&
+    minY > top - 15 &&
+    maxY < bottom + 15;
+
+  if (!inFrame) {
+
     handValid = false;
     handHoldStart = 0;
-  } else {
-    let kp = hands[0].keypoints;
+    handMessage = "Masukkan tangan ke dalam kotak";
 
+  } else {
+
+    // ===== CEK POSE OPEN =====
     let thumbTip = kp[4];
     let thumbBase = kp[2];
     let indexTip = kp[8];
@@ -1070,18 +1172,21 @@ function showCalibrateOpen() {
 
     let indexUp = indexTip.y < indexPIP.y;
     let thumbOpen = abs(thumbTip.x - thumbBase.x) > 25;
-
     let distance = dist(indexTip.x, indexTip.y, thumbTip.x, thumbTip.y);
     let fingersApart = distance > 40;
 
     let validPose = indexUp && thumbOpen && fingersApart;
 
     if (!validPose) {
-      handMessage = "Pastikan pose tangan sesuai";
+
+      boxColor = color(255, 255, 0);
       handValid = false;
       handHoldStart = 0;
+      handMessage = "Buka jempol & telunjuk lebih lebar";
+
     } else {
-      handMessage = "Memeriksa pose...";
+
+      boxColor = color(0, 255, 0);
 
       if (!handValid) {
         handHoldStart = millis();
@@ -1089,14 +1194,37 @@ function showCalibrateOpen() {
       }
 
       let holdTime = millis() - handHoldStart;
+      let remainingTime = ceil((OpenDuration - holdTime) / 1000);
+
+      if (remainingTime > 0) {
+
+        handMessage = "Bagus, tahan...";
+
+        textSize(40);
+        fill(255);
+        stroke(89, 26, 41);
+        strokeWeight(6);
+        text(remainingTime, width / 2, height / 2 + 40);
+      }
 
       if (holdTime >= OpenDuration) {
         calibratePhase = "correct";
         phaseStartTime = millis();
         handMessage = "";
+        correctSoundPlayed = false;
       }
     }
   }
+}
+// SAFEZONE
+stroke(boxColor);
+strokeWeight(3);
+drawingContext.setLineDash([10, 10]);
+noFill();
+rect(left, top, safeBoxWidth, safeBoxHeight);
+drawingContext.setLineDash([]);
+
+image(calib3, width / 2, height / 2, width, height);
 
   // TEXT
   if (handMessage !== "") {
@@ -1107,7 +1235,13 @@ function showCalibrateOpen() {
     text(handMessage, width / 2, height / 2);
   }
 }
+
 function showCalibratePinch() {
+    if (!calibPinchSound) {
+    calibpop.play();
+    calibPinchSound = true;
+  }
+
   image(calib4, width / 2, height / 2, width, height);
 
   if (calibratePhase === "intro") {
@@ -1126,6 +1260,11 @@ function showCalibratePinch() {
   }
 
   if (calibratePhase === "correct") {
+
+      if (!correctSoundPlayed) {
+    success.play();
+    correctSoundPlayed = true;
+  }
     image(correct, width / 2, height / 2, 100, 100);
 
     if (millis() - phaseStartTime >= correctDuration) {
@@ -1137,7 +1276,8 @@ function showCalibratePinch() {
   }
 
   if (calibratePhase === "done") {
-    nextCalibrateStep = 5;
+    calibPinchSound = false;
+    nextCalibrateStep = 6;
 
     calibPickPlayed = false;
     calibPickFinished = false;
@@ -1156,37 +1296,310 @@ function showCalibratePinch() {
   }
 
   // ================= CHECKING =================
+ let safeBoxWidth = 540;
+let safeBoxHeight = 380;
 
-  if (hands.length === 0) {
-    textMessage("Tangan tidak terdeteksi");
+let left = (width - safeBoxWidth) / 2;
+let right = left + safeBoxWidth;
+let top = (height - safeBoxHeight) / 2;
+let bottom = top + safeBoxHeight;
+
+let boxColor = color(255, 0, 0);
+handMessage = "";
+
+ if (hands.length === 0) {
+
+  handValid = false;
+  handHoldStart = 0;
+  handMessage = "Tangan tidak terdeteksi";
+
+} else {
+
+  let kp = hands[0].keypoints;
+
+  // ===== BOUNDING BOX =====
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+
+  for (let p of kp) {
+    minX = min(p.x, minX);
+    maxX = max(p.x, maxX);
+    minY = min(p.y, minY);
+    maxY = max(p.y, maxY);
+  }
+
+  let inFrame =
+    minX > left - 15 &&
+    maxX < right + 15 &&
+    minY > top - 15 &&
+    maxY < bottom + 15;
+
+  if (!inFrame) {
+
+    handValid = false;
+    handHoldStart = 0;
+    handMessage = "Masukkan tangan ke dalam kotak";
+
   } else {
-    let index = hands[0].keypoints[8];
-    let thumb = hands[0].keypoints[4];
 
+    let index = kp[8];
+    let thumb = kp[4];
     let distance = dist(index.x, index.y, thumb.x, thumb.y);
     let isPinch = distance < 25;
 
     if (!isPinch) {
-      textMessage("Pastikan jempol & telunjuk menyatu");
 
-      pinchChecking = false;
+      boxColor = color(255, 255, 0);
+      handValid = false;
+      handHoldStart = 0;
+      handMessage = "Satukan jempol & telunjuk";
+
     } else {
-      textMessage("Memeriksa pose...");
 
-      if (!pinchChecking) {
-        pinchChecking = true;
-        pinchStartTime = millis();
+      boxColor = color(0, 255, 0);
+
+      if (!handValid) {
+        handHoldStart = millis();
+        handValid = true;
       }
 
-      if (millis() - pinchStartTime >= pinchDuration) {
+      let holdTime = millis() - handHoldStart;
+      let remainingTime = ceil((pinchDuration - holdTime) / 1000);
+
+      if (remainingTime > 0) {
+
+        handMessage = "Bagus, tahan...";
+
+        textSize(40);
+        fill(255);
+        stroke(89, 26, 41);
+        strokeWeight(6);
+        text(remainingTime, width / 2, height / 2 + 40);
+      }
+
+      if (holdTime >= pinchDuration) {
         calibratePhase = "correct";
         phaseStartTime = millis();
-        pinchChecking = false;
+        handMessage = "";
+        correctSoundPlayed = false;
       }
     }
   }
 }
+
+// SAFEZONE
+stroke(boxColor);
+strokeWeight(3);
+drawingContext.setLineDash([10, 10]);
+noFill();
+rect(left, top, safeBoxWidth, safeBoxHeight);
+drawingContext.setLineDash([]);
+
+image(calib4, width / 2, height / 2, width, height);
+  // TEXT
+  if (handMessage !== "") {
+    textSize(18);
+    fill(255);
+    stroke(89, 26, 41);
+    strokeWeight(4);
+    text(handMessage, width / 2, height / 2);
+  }
+}
+function analyzeScene() {
+  if (!segmentation) return;
+
+  video.loadPixels();
+  segmentation.mask.loadPixels();
+
+  let fgSum = 0;
+  let bgSum = 0;
+  let fgCount = 0;
+  let bgCount = 0;
+
+  let brightnessTotal = 0;
+  let bgDiffSum = 0;
+  let prevBgBrightness = null;
+
+  for (let i = 0; i < video.pixels.length; i += 4) {
+    let r = video.pixels[i];
+    let g = video.pixels[i + 1];
+    let b = video.pixels[i + 2];
+    let brightness = (r + g + b) / 3;
+
+    let maskValue = segmentation.mask.pixels[i];
+
+    brightnessTotal += brightness;
+
+    if (maskValue > 0) {
+      fgSum += brightness;
+      fgCount++;
+    } else {
+      bgSum += brightness;
+      bgCount++;
+
+      if (prevBgBrightness !== null) {
+        bgDiffSum += abs(brightness - prevBgBrightness);
+      }
+      prevBgBrightness = brightness;
+    }
+  }
+
+  let fgAvg = fgCount > 0 ? fgSum / fgCount : 0;
+  let bgAvg = bgCount > 0 ? bgSum / bgCount : 0;
+
+  brightnessAvg = brightnessTotal / (video.pixels.length / 4);
+  contrastScore = abs(fgAvg - bgAvg);
+  bgComplexity = bgDiffSum / bgCount;
+
+  isTooDark = brightnessAvg < 90;
+  isTooBright = brightnessAvg > 200;
+  isBackgroundBusy = bgComplexity > 2.5;
+  goodContrast = contrastScore > 135;
+
+  isReady = !isTooDark && !isTooBright && !isBackgroundBusy && goodContrast;
+}
+function showCalibrateBg() {
+  image(calibbegron, width / 2, height / 2, width, height);
+
+  // ================= INTRO =================
+  if (calibratePhase === "intro") {
+
+    if (phaseStartTime === 0) {
+      phaseStartTime = millis();
+    }
+
+    textSize(18);
+    fill(255);
+    stroke(89, 26, 41);
+    strokeWeight(4);
+    text("Memeriksa tempat dan latarmu...", width / 2, height / 2);
+
+    if (millis() - phaseStartTime >= 2000) {
+      calibratePhase = "checking";
+      phaseStartTime = 0;
+    }
+
+    return;
+  }
+
+  // ================= CORRECT =================
+  if (calibratePhase === "correct") {
+
+    if (!correctSoundPlayed) {
+      success.play();
+      correctSoundPlayed = true;
+    }
+
+    image(correct, width / 2, height / 2 - 20, 100, 100);
+    image(calibGood, width / 2, height / 2, width, height);
+
+    textSize(18);
+    fill(255);
+    stroke(89, 26, 41);
+    strokeWeight(4);
+    text(
+      "Tetap di tempat ini ya,\nbiar permainannya lancar!",
+      width / 2,
+      height / 2 + 52
+    );
+
+    if (millis() - phaseStartTime >= 2000) {
+      calibratePhase = "done";
+      phaseStartTime = 0;
+    }
+
+    return;
+  }
+
+  // ================= DONE =================
+  if (calibratePhase === "done") {
+    resetCalibrateState();
+    nextCalibrateStep = 3;
+    return;
+  }
+
+  // ================= CHECKING =================
+
+  if (!segmentation) {
+    return;
+  }
+
+  analyzeScene();
+
+  let message = "";
+  let isValid = false;
+  let conditionImg = null;
+
+  if (isTooDark) {
+    message = "Tempat terlalu gelap";
+    conditionImg = calibTooDark;
+  } 
+  else if (isTooBright) {
+    message = "Tempat terlalu terang";
+    conditionImg = calibTooBright;
+  } 
+  else if (isBackgroundBusy) {
+    message = "Latar terlalu ramai";
+    conditionImg = calibBusy;
+  } 
+  else if (!goodContrast) {
+    message = "Warna kulitmu terlalu mirip\ndengan latar";
+    conditionImg = calibContrast;
+  } 
+  else {
+    isValid = true;
+    conditionImg = calibGood;
+  }
+
+ // ================= HOLD LOGIC =================
+  let remainingTime = 0;
+
+  if (!isValid) {
+    readyFrames = 0;
+  } else {
+
+    if (readyFrames === 0) {
+      readyFrames = millis();
+    }
+
+    let holdTime = millis() - readyFrames;
+    remainingTime = ceil((holdDuration - holdTime) / 1000);
+
+    if (remainingTime > 0) {
+      message = "Bagus, tahan posisi...";
+    }
+
+    if (holdTime >= holdDuration) {
+      calibratePhase = "correct";
+      phaseStartTime = millis();
+      readyFrames = 0;
+      correctSoundPlayed = false;
+    }
+  }
+
+
+  if (conditionImg) {
+    image(conditionImg, width / 2, height / 2, width, height);
+  }
+
+  if (message !== "") {
+    textSize(18);
+    fill(255);
+    stroke(89, 26, 41);
+    strokeWeight(4);
+    text(message, width / 2, height / 2);
+  }
+
+  if (isValid && remainingTime > 0) {
+    textSize(40);
+    strokeWeight(6);
+    text(remainingTime, width / 2, height / 2 + 40);
+  }
+}
 function showCalibratePick() {
+
   image(calib5, width / 2, height / 2, width, height);
 
   image(calibpick, width / 2, height / 2, width, height);
@@ -1195,16 +1608,31 @@ function showCalibratePick() {
   detectSkipButton();
 
   if (!calibPickPlayed) {
-    calibpick.reset();
-    calibpick.play();
-    calibPickPlayed = true;
-    calibPickFinished = false;
+    correctSoundPlayed = false;
+
+  calibpick.reset();
+  calibpick.play();
+
+  // 🔥 SOUND SAAT MULAI
+  if (!pickStartSoundPlayed) {
+    playvideo.play();
+    pickStartSoundPlayed = true;
+  }
+
+  pickEndSoundPlayed = false; // reset untuk nanti
+  calibPickFinished = false;
+  calibPickPlayed = true;
   }
 
   if (calibpick.getCurrentFrame() === calibpick.numFrames() - 1) {
     calibpick.pause();
     calibPickFinished = true;
+
+    if (!pickEndSoundPlayed) {
+    playvideo.play();
+    pickEndSoundPlayed = true;
   }
+}
   if (!calibPickFinished) return;
 
   if (showCorrectIcon) {
@@ -1213,7 +1641,12 @@ function showCalibratePick() {
     if (millis() - correctStartTime >= correctDuration) {
       showCorrectIcon = false;
       correctStartTime = 0;
-      nextCalibrateStep = 6;
+      nextCalibrateStep = 7;
+
+      pickStartSoundPlayed = false;
+      pickEndSoundPlayed = false;
+
+      calibPickPlayed = false;
       calibDragPlayed = false;
 
       calibrateTrash = {
@@ -1299,6 +1732,10 @@ function showCalibratePick() {
         showCorrectIcon = true;
         correctStartTime = millis();
         pickChecking = false;
+          if (!correctSoundPlayed) {
+            success.play();
+            correctSoundPlayed = true;
+          }
       }
     } else {
       pickChecking = false;
@@ -1306,6 +1743,7 @@ function showCalibratePick() {
   }
 }
 function showCalibrateThrow() {
+
   image(calib6, width / 2, height / 2, width, height);
   image(calibdrag, width / 2, height / 2, width, height);
 
@@ -1313,16 +1751,24 @@ function showCalibrateThrow() {
   detectSkipButton();
 
   if (!calibDragPlayed) {
+    correctSoundPlayed = false;
     calibdrag.reset();
     calibdrag.play();
+     playvideo.play();
+    calibThrowPlayed = true;
     calibDragPlayed = true;
     calibDragFinished = false;
   }
 
   if (calibdrag.getCurrentFrame() === calibdrag.numFrames() - 1) {
-    calibdrag.pause();
-    calibDragFinished = true;
+  calibdrag.pause();
+  calibDragFinished = true;
+
+  if (!dragEndSoundPlayed) {
+    playvideo.play();
+    dragEndSoundPlayed = true;
   }
+}
 
 
   if (!calibDragFinished) return;
@@ -1332,11 +1778,19 @@ function showCalibrateThrow() {
 
     if (millis() - correctStartTime > 1000) {
       showCorrectIcon = false;
-      nextCalibrateStep = 7;
+      calibThrowPlayed = false;
+      nextCalibrateStep = 8;
 
       // reset gif untuk next time
       calibDragPlayed = false;
       calibDragFinished = false;
+
+        calibTransPlayed = false;
+        dragEndSoundPlayed = false;
+
+        mulaiUnlocked = false;
+        mulaiClicked = false;
+        mulaiStartTime = millis();
     }
     return;
   }
@@ -1427,6 +1881,12 @@ function showCalibrateThrow() {
       if (trashBinDist < 60) {
         showCorrectIcon = true;
         correctStartTime = millis();
+
+         if (!correctSoundPlayed) {
+      success.play();
+      correctSoundPlayed = true;
+    }
+        
       } else {
         // langsung reset posisi
         calibrateTrash.pos.x = calibrateTrash.startPos.x;
@@ -1434,6 +1894,8 @@ function showCalibrateThrow() {
 
         showWrongIcon = true;
         wrongStartTime = millis();
+
+         error.play();
       }
       calibratePinched = false;
     }
@@ -1446,8 +1908,17 @@ function showCalibrateTransition() {
 
   // gif transition
   if (!calibTransPlayed) {
+    mulaiStartTime = millis(); 
+    mulaiClicked = false;
+    mulaiUnlocked = false;
+
     calibtrans.reset();
     calibtrans.play();
+
+  if (!transSoundPlayed) {
+    readytoplay.play(); 
+    transSoundPlayed = true;
+  }
     calibTransPlayed = true;
   }
 
@@ -1463,6 +1934,8 @@ function showCalibrateTransition() {
 
   if (!mulaiUnlocked) return;
 
+  console.log("mulaiClicked:", mulaiClicked);
+
   if (hands.length > 0) {
     let index = hands[0].keypoints[8];
     let thumb = hands[0].keypoints[4];
@@ -1476,18 +1949,31 @@ function showCalibrateTransition() {
         fingersY > height / 2 + 161 - 60 / 2 &&
         fingersY < height / 2 + 161 + 60 / 2
       ) {
-           loadLevel(currentLevel);
-
-   hasCompletedTutorial = true;
-
-gameState = "play";
-  //  startFade("play");
-
-   calibTransPlayed = false;
+          if (!mulaiClicked) {
+    click.play();
+    mulaiClicked = true;
+          if (calibrateFromChoose) {
+            gameState = "choose";
+          } else {
+            // loadLevel(currentLevel);
+            levelLoaded = false;
+            hasCompletedTutorial = true;
+            gameState = "play";
+          }
+          
+          calibTransPlayed = false;
+          transSoundPlayed = false;
+          calibrateFromChoose = false; // reset
       }
+    }
     }
   }
 }
+
+function gotSegmentationResults(result) {
+  segmentation = result;
+}
+
 function skipIcon() {
   push();
 
@@ -1504,18 +1990,30 @@ function detectSkipButton() {
   if (hands.length > 0) {
     let index = hands[0].keypoints[8];
     let thumb = hands[0].keypoints[4];
+
     let distBetweenFingers = dist(index.x, index.y, thumb.x, thumb.y);
+
     if (distBetweenFingers < 25) {
+
       let fingersX = (index.x + thumb.x) * 0.5;
       let fingersY = (index.y + thumb.y) * 0.5;
+
       if (
         fingersX > width - 71 &&
         fingersX < width - 33 &&
         fingersY > 18 &&
         fingersY < 56
       ) {
-        nextCalibrateStep = 7;
+
+        if (!skipClicked) {
+          click.play(); 
+          skipClicked = true;
+          nextCalibrateStep = 8;
+        }
       }
+    } else {
+      // reset saat pinch dilepas
+      skipClicked = false;
     }
   }
 }
@@ -1534,10 +2032,25 @@ function startFade(stateToGo) {
   fadeDirection = 1;
   nextState = stateToGo;
 }
-
+function startFadeIn() {
+  isFading = true;
+  fadeDirection = -1; // langsung fade IN
+  fadeAlpha = 255;    // mulai dari hitam
+}
 // draw levelgame
 function playGame() {
   if (gameState !== "play") return;
+
+   if (showLevelIntro) {
+    levelIntroScreen();
+
+    if (millis() - levelIntroStart > levelIntroDuration) {
+      showLevelIntro = false;
+      inputLocked = false;
+    }
+
+    return;
+  }
   
   if (currentLevel === 1) image(bg1, width / 2, height / 2, width, height);
   else if (currentLevel === 2) image(bg2, width / 2, height / 2, width, height);
@@ -1557,7 +2070,7 @@ function playGame() {
   }
 
   for (let trash of trashs) {
-    image(trash.object, trash.pos.x, trash.pos.y, 60, 60);
+    image(trash.object, trash.pos.x, trash.pos.y, 70, 70);
   }
 
   if (result) {
@@ -1574,7 +2087,9 @@ function playGame() {
   if (!playUnlocked && millis() - playStartTime > playDelay) {
     playUnlocked = true;
   }
-
+if (playUnlocked && !levelStarted) {
+  levelStarted = true;
+}
   if (showHint && millis() - unlockTime > 1500) {
     promptHint();
   }
@@ -1602,23 +2117,41 @@ function playGame() {
     // }
   }
 }
+
+function levelIntroScreen(){
+  //  fill(92, 106, 158, 150);
+  // rect(0, 0, width, height);
+
+  let levelintroImg = levelIntroImages[currentLevel];
+ if (levelintroImg) {
+    image(levelintroImg, width / 2, height / 2, width, height);
+  }
+  
+}
 function rewardScreen() {
   push();
   fill(92, 106, 158, 150);
   rect(0, 0, width, height);
-  image(shine, width / 2, height / 2, 288, 219);
+
+  if (shine) {
+    image(shine, width / 2, height / 2, 288, 219);
+  }
 
   let badgeImg = getCurrentReward();
 
-  image(badgeImg, width / 2, height / 2, width, height);
+  if (badgeImg) {
+    image(badgeImg, width / 2, height / 2, width, height);
 
-  if (badgeImg && badgeImg.numFrames) {
-    if (badgeImg.getCurrentFrame() === badgeImg.numFrames() - 1) {
-      badgeImg.pause();
+    if (badgeImg.numFrames && badgeImg.getCurrentFrame) {
+      if (badgeImg.getCurrentFrame() === badgeImg.numFrames() - 1) {
+        badgeImg.pause();
+      }
     }
   }
 
-  image(claimButton, width / 2, height / 2 + 161, 182, 60);
+  if (claimButton) {
+    image(claimButton, width / 2, height / 2 + 161, 182, 60);
+  }
 
   if (!claimUnlocked && millis() - rewardShow > claimDelay) {
     claimUnlocked = true;
@@ -1650,6 +2183,9 @@ function detectHandClaimButton() {
 function claimReward() {
   claim.play();
 
+  result = null;
+  resultStay = 0;
+
   hintVisible = false;
   jedaVisible = false;
   showHint = false;
@@ -1657,6 +2193,7 @@ function claimReward() {
 //   levelCompleted = false;
 //   levelStarted = false; 
   currentLevel++;
+
 
   // set level menang disini
   // if (currentLevel <= 1) {
@@ -1670,33 +2207,131 @@ function claimReward() {
 if (selectedArea && areaLevels[selectedArea]) {
 
   if (currentLevel <= areaLevels[selectedArea].end) {
-    loadLevel(currentLevel);
+    // loadLevel(currentLevel);
+    levelLoaded = false;
     gameState = "play";
   } else {
-    gameState = "win";
-    enterWinScreen();
+    gameState = "impact";
+    startFadeIn();
+
+    impactStartTime = millis();
+    inputLocked = true;
+
+    playImpactSound();
+    // gameState = "win";
+    // enterWinScreen();
   }
 
 } else {
 
   // fallback ke campaign
   if (currentLevel <= 9) {
-    loadLevel(currentLevel);
+    // loadLevel(currentLevel);
+    levelLoaded = false;
     gameState = "play";
   } else {
-    gameState = "win";
-    enterWinScreen();
+    gameState = "impact";
+    startFadeIn();
+
+    impactStartTime = millis();
+    inputLocked = true;
+    // gameState = "win";
+    // enterWinScreen();
   }
 
 }
 }
 
+function getImpactImage() {
+  let tier = getScoreTier();
+
+  if (tier === "high") return impactGood;
+  if (tier === "mid") return impactMid;
+  return impactBad;
+}
+
+function getImpactText() {
+  let tier = getScoreTier();
+
+  if (tier === "high") {
+    return "Hebat, Hero!\nBerkatmu lingkungan jadi sehat\ndan bersih dari sampah";
+  } else if (tier === "mid") {
+    return "Usaha bagus, Hero!\nTapi masih ada sampah bercampur,\nlingkungan jadi bau...";
+  } else {
+    return "Oh tidak...\nTerlalu banyak kesalahan,\njadi banjir!";
+  }
+}
+function playImpactSound() {
+  let tier = getScoreTier();
+
+  if (currentImpactSound && currentImpactSound.isPlaying()) {
+    currentImpactSound.stop();
+  }
+
+  if (tier === "high") {
+    currentImpactSound = river;
+  } 
+  else if (tier === "mid") {
+    currentImpactSound = bird;
+  } 
+  else {
+    currentImpactSound = rain;
+  }
+
+  if (currentImpactSound) {
+    currentImpactSound.loop();
+  }
+}
+
+function impactScreen() {
+
+  let impactImg = getImpactImage();
+  image(impactImg, width / 2, height / 2, width, height);
+
+  // text
+  textSize(18);
+  fill(255);
+  stroke(89, 26, 41);
+  strokeWeight(4);
+  strokeJoin(ROUND);
+
+  text(getImpactText(), width / 2, 65);
+  image(lihatskor, width / 2, height / 2 + 175, 226, 60);
+}
+
+function detectHandImpactButton() {
+  if (inputLocked) return;
+
+if (hands.length > 0) {
+    let index = hands[0].keypoints[8];
+    let thumb = hands[0].keypoints[4];
+
+    let distBetweenFingers = dist(index.x, index.y, thumb.x, thumb.y);
+
+    // pinch
+    if (distBetweenFingers < 18) {
+      let fingersX = (index.x + thumb.x) * 0.5;
+      let fingersY = (index.y + thumb.y) * 0.5;
+
+      if (
+        fingersX > width / 2 - 113 &&
+        fingersX < width / 2 + 113 &&
+        fingersY > height / 2 + 161 - 30 &&
+        fingersY < height / 2 + 161 + 30
+      ) {
+        gameState = "win";
+        enterWinScreen();
+      }
+    }
+  }
+}
 function gotHands(results) {
   hands = results;
 }
 
 function checkHover(trash, index) {
   if (!playUnlocked) return;
+  if (inputLocked) return;
   if (!dragTrash) return;
   
 
@@ -1720,9 +2355,9 @@ function checkHover(trash, index) {
         trash.pos.x = fingersPos.x;
         trash.pos.y = fingersPos.y;
 
-        image(trash.object, trash.pos.x, trash.pos.y, 70, 70);
+        image(trash.object, trash.pos.x, trash.pos.y, 83, 83);
 
-        textSize(12);
+        textSize(14);
         fill(255, 255, 255);
         stroke(89, 26, 41);
         strokeWeight(4);
@@ -1737,7 +2372,7 @@ function checkHover(trash, index) {
 
         result = correct;
         resultStay = millis();
-        right.play();
+        success.play();
 
         score += 4;
         correctHint -= 1;
@@ -1780,45 +2415,45 @@ function loadLevel(level) {
   bins = [];
   trashs = [];
 
-  // if (level === 1) {
-  //   correctHint = 2;
-  // } else if (level === 2) {
-  //   correctHint = 1;
-  // } else if (level === 3) {
-  //   correctHint = 3;
-  // } else if (level === 4) {
-  //   correctHint = 3;
-  // } else if (level === 5) {
-  //   correctHint = 2;
-  // } else if (level === 6) {
-  //   correctHint = 3;
-  // } else if (level === 7) {
-  //   correctHint = 4;
-  // } else if (level === 8) {
-  //   correctHint = 2;
-  // } else if (level === 9) {
-  //   correctHint = 5;
-  // }
-  //   trial hehe
   if (level === 1) {
     correctHint = 2;
   } else if (level === 2) {
     correctHint = 1;
   } else if (level === 3) {
-    correctHint = 1;
+    correctHint = 3;
   } else if (level === 4) {
-    correctHint = 1;
+    correctHint = 3;
   } else if (level === 5) {
-    correctHint = 1;
+    correctHint = 2;
   } else if (level === 6) {
-    correctHint = 1;
+    correctHint = 3;
   } else if (level === 7) {
-    correctHint = 1;
+    correctHint = 4;
   } else if (level === 8) {
-    correctHint = 1;
+    correctHint = 2;
   } else if (level === 9) {
-    correctHint = 1;
+    correctHint = 4;
   }
+  //   trial hehe
+  // if (level === 1) {
+  //   correctHint = 2;
+  // } else if (level === 2) {
+  //   correctHint = 1;
+  // } else if (level === 3) {
+  //   correctHint = 1;
+  // } else if (level === 4) {
+  //   correctHint = 1;
+  // } else if (level === 5) {
+  //   correctHint = 1;
+  // } else if (level === 6) {
+  //   correctHint = 1;
+  // } else if (level === 7) {
+  //   correctHint = 1;
+  // } else if (level === 8) {
+  //   correctHint = 1;
+  // } else if (level === 9) {
+  //   correctHint = 1;
+  // }
   // dapur
   if (level === 1) {
     bins = [
@@ -1833,29 +2468,29 @@ function loadLevel(level) {
       {
         object: telur,
         name: "Cangkang telur",
-        pos: createVector(155, 181),
-        startPos: createVector(155, 181),
+        pos: createVector(140, 229),
+        startPos: createVector(140, 229),
         targetPos: bins[0].pos,
       },
       {
         object: plastik,
         name: "Kantong plastik",
-        pos: createVector(484, 254),
-        startPos: createVector(484, 254),
+        pos: createVector(382, 309),
+        startPos: createVector(382, 309),
         targetPos: bins[1].pos,
       },
       {
         object: leek,
         name: "Daun bawang",
-        pos: createVector(155, 335),
-        startPos: createVector(155, 335),
+        pos: createVector(189, 318),
+        startPos: createVector(189, 318),
         targetPos: bins[0].pos,
       },
       {
         object: milk,
         name: "Karton susu",
-        pos: createVector(335, 284),
-        startPos: createVector(335, 284),
+        pos: createVector(298, 266),
+        startPos: createVector(298, 266),
         targetPos: bins[1].pos,
       },
     ];
@@ -1874,22 +2509,22 @@ function loadLevel(level) {
       {
         object: daun,
         name: "Dedaunan",
-        pos: createVector(425, 290),
-        startPos: createVector(425, 290),
+        pos: createVector(430, 278),
+        startPos: createVector(430, 278),
         targetPos: bins[0].pos,
       },
       {
         object: ikan,
         name: "Tulang ikan",
-        pos: createVector(245, 350),
-        startPos: createVector(245, 350),
+        pos: createVector(209, 338),
+        startPos: createVector(209, 338),
         targetPos: bins[0].pos,
       },
       {
         object: plastik,
         name: "Kantong plastik",
-        pos: createVector(117, 330),
-        startPos: createVector(117, 330),
+        pos: createVector(365, 338),
+        startPos: createVector(365, 338),
         targetPos: bins[1].pos,
       }, 
     ];
@@ -1908,44 +2543,44 @@ function loadLevel(level) {
       {
         object: botol,
         name: "Botol plastik",
-        pos: createVector(245, 364),
-        startPos: createVector(245, 364),
+        pos: createVector(454, 337),
+        startPos: createVector(454, 337),
         targetPos: bins[1].pos,
       },
       {
         object: snack,
         name: "Bungkusan snack",
-        pos: createVector(365, 254),
-        startPos: createVector(365, 254),
+        pos: createVector(126, 360),
+        startPos: createVector(126, 360),
         targetPos: bins[1].pos,
       },
       {
         object: daun,
         name: "Dedaunan",
-        pos: createVector(439, 323),
-        startPos: createVector(439, 323),
+        pos: createVector(324, 339),
+        startPos: createVector(324, 339),
         targetPos: bins[0].pos,
       },
       {
         object: koran,
         name: "Koran bekas",
-        pos: createVector(280, 284),
-        startPos: createVector(280, 284),
+        pos: createVector(225, 325),
+        startPos: createVector(225, 325),
         targetPos: bins[1].pos,
       },
       {
         object: pisang,
         name: "Kulit pisang",
-        pos: createVector(185, 270),
-        startPos: createVector(185, 270),
+        pos: createVector(355, 261),
+        startPos: createVector(355, 261),
         targetPos: bins[0].pos,
       },
       {
         object: ranting,
         name: "Ranting pohon",
-        pos: createVector(116, 323),
-        startPos: createVector(116, 323),
-        targetPos: bins[0].pos,
+        pos: createVector(185, 267),
+        startPos: createVector(185, 267),
+        targetPos: bins[0].pos, 
       },
     ];
   }
@@ -1961,38 +2596,38 @@ function loadLevel(level) {
       {
         object: kaleng,
         name: "Kaleng soda",
-        pos: createVector(100, 300),
-        startPos: createVector(100, 300),
+        pos: createVector(399, 317),
+        startPos: createVector(399, 317),
         targetPos: bins[1].pos,
       },
       {
         object: bohlam,
         name: "Bola lampu rusak",
-        pos: createVector(435, 233),
-        startPos: createVector(435, 233),
+        pos: createVector(441, 259),
+        startPos: createVector(441, 259),
         targetPos: bins[2].pos,
       },
       {
         object: pisang,
         name: "Kulit pisang",
-        pos: createVector(195, 233),
-        startPos: createVector(195, 233),
+        pos: createVector(109, 329),
+        startPos: createVector(109, 329),
         targetPos: bins[0].pos,
       },
       {
         object: ayam,
         name: "Tulang ayam",
-        pos: createVector(300, 263),
-        startPos: createVector(300, 263),
+        pos: createVector(210, 266),
+        startPos: createVector(210, 266),
         targetPos: bins[0].pos,
       },
       {
         object: kertas,
         name: "Kertas bekas",
-        pos: createVector(240, 329),
-        startPos: createVector(240, 399),
+        pos: createVector(261, 329),
+        startPos: createVector(261, 329),
         targetPos: bins[1].pos,
-      },
+      }, 
     ];
   }
   //   kantin
@@ -2007,41 +2642,41 @@ function loadLevel(level) {
       {
         object: ayam,
         name: "Tulang ayam",
-        pos: createVector(155, 283),
-        startPos: createVector(155, 283),
+        pos: createVector(129, 290),
+        startPos: createVector(129, 290),
         targetPos: bins[0].pos,
       },
       {
         object: bohlam,
         name: "Bola lampu rusak",
-        pos: createVector(215, 223),
-        startPos: createVector(215, 223),
+        pos: createVector(307, 266),
+        startPos: createVector(307, 266),
         targetPos: bins[2].pos,
       },
       {
         object: telur,
         name: "Cangkang telur",
-        pos: createVector(355, 324),
-        startPos: createVector(355, 324),
+        pos: createVector(471, 310),
+        startPos: createVector(471, 310),
         targetPos: bins[0].pos,
       },
       {
         object: tisu,
         name: "Tisu bekas",
-        pos: createVector(434, 283),
-        startPos: createVector(434, 283),
+        pos: createVector(239, 329),
+        startPos: createVector(239, 329),
         targetPos: bins[1].pos,
       },
       {
         object: milk,
         name: "Karton susu",
-        pos: createVector(369, 240),
-        startPos: createVector(369,240),
+        pos: createVector(408, 270),
+        startPos: createVector(408, 270),
         targetPos: bins[1].pos,
       },
     ];
   }
-  //   playground
+  // //   playground
   if (level === 6) {
     bins = [
       { object: organicbin, pos: createVector(width / 2 - 150, height - 45) },
@@ -2053,43 +2688,43 @@ function loadLevel(level) {
       {
         object: apel,
         name: "Apel",
-        pos: createVector(365, 318),
-        startPos: createVector(365, 318),
+        pos: createVector(404, 327),
+        startPos: createVector(404, 327),
         targetPos: bins[0].pos,
       },
       {
         object: bungkusKertas,
         name: "Bungkusan makanan",
-        pos: createVector(444, 300),
-        startPos: createVector(444, 300),
+        pos: createVector(474, 282),
+        startPos: createVector(474, 282),
         targetPos: bins[1].pos,
       },
       {
         object: bunga,
         name: "Bunga layu",
-        pos: createVector(373, 252),
-        startPos: createVector(373, 252),
+        pos: createVector(109, 328),
+        startPos: createVector(109, 328),
         targetPos: bins[0].pos,
       },
       {
         object: masker,
         name: "Masker bekas",
-        pos: createVector(245, 252),
-        startPos: createVector(245, 252),
+        pos: createVector(316, 282),
+        startPos: createVector(316, 282),
         targetPos: bins[2].pos,
       },
       {
         object: ranting,
         name: "Ranting pohon",
-        pos: createVector(215, 330),
-        startPos: createVector(215, 330),
+        pos: createVector(260, 342),
+        startPos: createVector(260, 342),
         targetPos: bins[0].pos,
       },
       {
         object: gelas,
         name: "Gelas plastik",
-        pos: createVector(125, 210),
-        startPos: createVector(125, 210),
+        pos: createVector(155, 222),
+        startPos: createVector(155, 222),
         targetPos: bins[1].pos,
       },
     ];
@@ -2106,15 +2741,15 @@ function loadLevel(level) {
       {
         object: terong,
         name: "Terong",
-        pos: createVector(135, 249),
-        startPos: createVector(135, 249),
+        pos: createVector(373, 323),
+        startPos: createVector(373, 323),
         targetPos: bins[0].pos,
       },
       {
         object: daun,
         name: "Dedaunan",
-        pos: createVector(109, 229),
-        startPos: createVector(109, 229),
+        pos: createVector(146, 339),
+        startPos: createVector(146, 339),
         targetPos: bins[0].pos,
       },
       {
@@ -2134,15 +2769,15 @@ function loadLevel(level) {
       {
         object: wortel,
         name: "Wortel",
-        pos: createVector(399, 359),
-        startPos: createVector(399, 359),
+        pos: createVector(176, 261),
+        startPos: createVector(176, 261),
         targetPos: bins[0].pos,
       },
       {
         object: botolKaca,
         name: "Botol kaca",
-        pos: createVector(240, 348),
-        startPos: createVector(240, 348),
+        pos: createVector(225, 323),
+        startPos: createVector(225, 323),
         targetPos: bins[1].pos,
       },
     ];
@@ -2157,31 +2792,31 @@ function loadLevel(level) {
 
     trashs = [
       {
-        object: botol,
-        name: "Botol plastik",
-        pos: createVector(117, 353),
-        startPos: createVector(117, 353),
+        object: botolKaca,
+        name: "Botol kaca",
+        pos: createVector(152, 325),
+        startPos: createVector(152, 325),
         targetPos: bins[1].pos,
       },
       {
         object: masker,
         name: "Masker bekas",
-        pos: createVector(203, 276),
-        startPos: createVector(203, 276),
+        pos: createVector(253, 276),
+        startPos: createVector(253, 276),
         targetPos: bins[2].pos,
       },
       {
         object: bungkusPlastik,
         name: "Bungkusan plastik",
-        pos: createVector(465, 336),
-        startPos: createVector(465, 336),
+        pos: createVector(474, 339),
+        startPos: createVector(474, 339),
         targetPos: bins[1].pos,
       },
       {
         object: roti,
         name: "Roti",
-        pos: createVector(417, 270),
-        startPos: createVector(417, 270),
+        pos: createVector(425, 276),
+        startPos: createVector(425, 276),
         targetPos: bins[0].pos,
       },
     ];
@@ -2198,52 +2833,52 @@ function loadLevel(level) {
       {
         object: kelapa,
         name: "Batok kelapa",
-        pos: createVector(136, 240),
-        startPos: createVector(136, 240),
+        pos: createVector(117, 274),
+        startPos: createVector(117, 274),
         targetPos: bins[0].pos,
       },
-      {
-        object: mcd,
-        name: "Bungkusan makanan",
-        pos: createVector(86, 340),
-        startPos: createVector(86, 340),
-        targetPos: bins[1].pos,
-      },
-      {
-        object: ikan,
-        name: "Tulang ikan",
-        pos: createVector(385, 340),
-        startPos: createVector(385, 340),
-        targetPos: bins[0].pos,
-      },
-      {
-        object: baygon,
-        name: "Semprotan anti nyamuk",
-        pos: createVector(300, 259),
-        startPos: createVector(300, 259),
-        targetPos: bins[2].pos,
-      },
-      {
-        object: sandal,
-        name: "Sandal bekas",
-        pos: createVector(474, 340),
-        startPos: createVector(474, 340),
-        targetPos: bins[1].pos,
-      },
-      {
-        object: batre,
-        name: "Baterai bekas",
-        pos: createVector(444, 229),
-        startPos: createVector(444, 229),
-        targetPos: bins[2].pos,
-      },
-      {
-        object: ranting,
-        name: "Ranting pohon",
-        pos: createVector(270, 330),
-        startPos: createVector(270, 330),
-        targetPos: bins[0].pos,
-      },
+      // {
+      //   object: mcd,
+      //   name: "Bungkusan makanan",
+      //   pos: createVector(471, 275),
+      //   startPos: createVector(471, 275),
+      //   targetPos: bins[1].pos,
+      // },
+      // {
+      //   object: ikan,
+      //   name: "Tulang ikan",
+      //   pos: createVector(196, 252),
+      //   startPos: createVector(196, 252),
+      //   targetPos: bins[0].pos,
+      // },
+      // {
+      //   object: baygon,
+      //   name: "Semprotan anti nyamuk",
+      //   pos: createVector(265, 322),
+      //   startPos: createVector(265, 322),
+      //   targetPos: bins[2].pos,
+      // },
+      // {
+      //   object: sandal,
+      //   name: "Sandal bekas",
+      //   pos: createVector(386, 345),
+      //   startPos: createVector(386, 345),
+      //   targetPos: bins[1].pos,
+      // },
+      // {
+      //   object: batre,
+      //   name: "Baterai bekas",
+      //   pos: createVector(315, 235),
+      //   startPos: createVector(315, 235),
+      //   targetPos: bins[2].pos,
+      // },
+      // {
+      //   object: ranting,
+      //   name: "Ranting pohon",
+      //   pos: createVector(133, 337),
+      //   startPos: createVector(133, 337),
+      //   targetPos: bins[0].pos,
+      // },
     ];
   }
   
@@ -2301,7 +2936,7 @@ function scoreCount() {
   stroke(89, 26, 41);
   strokeWeight(5);
   textSize(40);
-  text(score, width / 2, 120);
+  text(score, width / 2, 110);
 
   pop();
 }
@@ -2355,28 +2990,78 @@ function needHint() {
   if (!unlockHint && correctHint > 0) {
     push();
 
-    image(collecthintlabel, width / 2, 155, 282, 37);
+    image(collecthintlabel, width / 2, 140, 237, 37);
     fill(255, 255, 255);
     stroke(89, 26, 41);
     strokeWeight(5);
     textSize(15);
-    text(correctHint, width / 2 - 81, 162);
+    text(correctHint, width / 2 - 68, 147);
 
     pop();
   }
 }
+// function displayJeda() {
+//   dragTrash = false;
+//   push();
+//   fill(92, 106, 158, 150);
+//   rect(0, 0, width, height);
+//   pop();
+
+//   push();
+
+//   image(jedaPage, width / 2, height / 2, width, height);
+//   image(lanjutButton, width / 2, height - 130, 248, 60);
+//   pop();
+
+//   if (hands.length > 0) {
+//     let index = hands[0].keypoints[8];
+//     let thumb = hands[0].keypoints[4];
+//     let distBetweenFingers = dist(index.x, index.y, thumb.x, thumb.y);
+
+//     if (distBetweenFingers < 25) {
+//       let fingersX = (index.x + thumb.x) * 0.5;
+//       let fingersY = (index.y + thumb.y) * 0.5;
+//       if (
+//         fingersX > width / 2 - 124 &&
+//         fingersX < width / 2 + 124 &&
+//         fingersY > height - 160 &&
+//         fingersY < height - 100
+//       ) {
+//         jedaVisible = false;
+//         dragTrash = true;
+//         click.play();
+//       }
+//     }
+//   }
+// }
 function displayJeda() {
   dragTrash = false;
+
+  // overlay gelap
   push();
   fill(92, 106, 158, 150);
   rect(0, 0, width, height);
   pop();
 
+  // UI background
   push();
-
   image(jedaPage, width / 2, height / 2, width, height);
-  image(lanjutButton, width / 2, height - 130, 248, 60);
+
+  // =========================
+  // TOMBOL
+  // =========================
+
+  if (selectedArea !== null) {
+    // mode choose (2 tombol)
+    image(exit, width / 2 - 120, height / 2 + 160, 196, 60);
+    image(lanjutButton, width / 2 + 120, height / 2 + 160, 226, 60);
+  } else {
+    // mode campaign (1 tombol)
+    image(lanjutButton, width / 2, height / 2 + 160, 226, 60);
+  }
+
   pop();
+
 
   if (hands.length > 0) {
     let index = hands[0].keypoints[8];
@@ -2386,15 +3071,49 @@ function displayJeda() {
     if (distBetweenFingers < 25) {
       let fingersX = (index.x + thumb.x) * 0.5;
       let fingersY = (index.y + thumb.y) * 0.5;
-      if (
-        fingersX > width / 2 - 124 &&
-        fingersX < width / 2 + 124 &&
-        fingersY > height - 160 &&
-        fingersY < height - 100
-      ) {
-        jedaVisible = false;
-        dragTrash = true;
-        click.play();
+
+// area mode
+// lanjut button
+      if (selectedArea !== null) {
+
+        if (
+          fingersX > width / 2 + 120 - 113 &&
+          fingersX < width / 2 + 120 + 113 &&
+          fingersY > height / 2 + 160 - 30 &&
+          fingersY < height / 2 + 160 + 30
+        ) {
+          jedaVisible = false;
+          dragTrash = true;
+          click.play();
+        }
+        // exit button
+        if (
+          fingersX > width / 2 - 120 - 98 &&
+          fingersX < width / 2 - 120 + 98 &&
+          fingersY > height / 2 + 160 - 30 &&
+          fingersY < height / 2 + 160 + 30
+        ) {
+          click.play();
+          jedaVisible = false;
+
+          levelLoaded = false;
+
+          gameState = "choose";
+        }
+      }
+
+// first time mode
+      else {
+        if (
+          fingersX > width / 2 - 113 &&
+          fingersX < width / 2 + 113 &&
+          fingersY > height / 2 + 160 - 30 &&
+          fingersY < height / 2 + 160 + 30
+        ) {
+          jedaVisible = false;
+          dragTrash = true;
+          click.play();
+        }
       }
     }
   }
@@ -2455,7 +3174,7 @@ function enterRewardScreen() {
 }
 
 function enterWinScreen() {
-  song.stop();
+  // song.stop();
   winStartTime = millis();
   winReady = false;
   winPlayed = false;
@@ -2478,6 +3197,8 @@ function enterWinScreen() {
   // }
 
   //   ini untuk overall level 9
+
+
   // if (score >= 120) {
   //    bgWin = win1;
   //  } else if (score >= 60) {
@@ -2485,10 +3206,27 @@ function enterWinScreen() {
   //  }  else {
   //    bgWin = win3;
   //  }
+// untuk level sekolah and rekre
+  // if (score >= 40) {
+  //   bgWin = win1;
+  // } else if (score >= 20) {
+  //   bgWin = win2;
+  // } else {
+  //   bgWin = win3;
+  // }
+  let modeKey;
 
-  if (score >= 40) {
+  if (selectedArea) {
+    modeKey = selectedArea;   // perumahan / sekolah / rekreasi
+  } else {
+    modeKey = "full";         // main 1–9
+  }
+
+  let config = areaScoreConfig[modeKey];
+
+  if (score >= config.high) {
     bgWin = win1;
-  } else if (score >= 20) {
+  } else if (score >= config.mid) {
     bgWin = win2;
   } else {
     bgWin = win3;
@@ -2497,6 +3235,26 @@ function enterWinScreen() {
   if (bgWin && bgWin.reset) {
     bgWin.reset();
     bgWin.play();
+  }
+}
+
+function getScoreTier() {
+  let modeKey;
+
+  if (selectedArea) {
+    modeKey = selectedArea;
+  } else {
+    modeKey = "full";
+  }
+
+  let config = areaScoreConfig[modeKey];
+
+  if (score >= config.high) {
+    return "high";
+  } else if (score >= config.mid) {
+    return "mid";
+  } else {
+    return "low";
   }
 }
 
@@ -2529,7 +3287,7 @@ function winScreen() {
 }
 
 function playagainButton() {
-  image(playagain, width / 2 - 120, height / 2 + 175, 196, 60);
+  image(playagain, width / 2 + 120, height / 2 + 175, 196, 60);
   if (!winReady) return;
 
   if (hands.length > 0) {
@@ -2540,64 +3298,46 @@ function playagainButton() {
       let fingersX = (index.x + thumb.x) * 0.5;
       let fingersY = (index.y + thumb.y) * 0.5;
       if (
-        fingersX > width / 2 - 120 - 98 &&
-        fingersX < width / 2 - 120 + 98 &&
-        fingersY > height / 2 + 175 - 30 &&
-        fingersY < height / 2 + 175 + 30
+      fingersX > width / 2 + 120 - 98 &&
+      fingersX < width / 2 + 120 + 98 &&
+      fingersY > height / 2 + 175 - 30 &&
+      fingersY < height / 2 + 175 + 30
       ) {
         winPlayed = true;
-        // gameState = "play";
-        // currentLevel = 1;
-        // score = 0;
-
-        // resetGame("choose");
         gameState = "choose"
+        resetGameVariables();
         click.play();
-        if (!song.isPlaying()) {
-    song.loop();
-  }
+  //       if (!song.isPlaying()) {
+  //   song.loop();
+  // }
       }
     }
   }
 }
 
 function exitButton() {
-  image(exit, width / 2 + 128, height / 2 + 175, 196, 60);
+  image(exit, width / 2 - 120, height / 2 + 175, 196, 60);
 
   if (!winReady) return;
-  if (hands.length > 0) {
+   if (hands.length > 0) {
     let index = hands[0].keypoints[8];
     let thumb = hands[0].keypoints[4];
     let distBetweenFingers = dist(index.x, index.y, thumb.x, thumb.y);
     if (distBetweenFingers < 25) {
       let fingersX = (index.x + thumb.x) * 0.5;
       let fingersY = (index.y + thumb.y) * 0.5;
-      let btnLeft = width / 2 + 128 - 98;
-      let btnRight = width / 2 + 128 + 98;
-      let btnTop = height / 2 + 175 - 30;
-      let btnBottom = height / 2 + 175 + 30;
-
       if (
-        fingersX > btnLeft &&
-        fingersX < btnRight &&
-        fingersY > btnTop &&
-        fingersY < btnBottom
+      fingersX > width / 2 - 120 - 98 &&
+      fingersX < width / 2 - 120 + 98 &&
+      fingersY > height / 2 + 175 - 30 &&
+      fingersY < height / 2 + 175 + 30
       ) {
-        // win.stop();
-        // winPlayed = true;
-        // gameState = "landing";
-        // delayStartButton = true;
-        // landingStartTime = millis();
-        // click.play();
-        // score = 0;
-
          win.stop();
          resetGameVariables();
-
-  // balik ke landing
-  gameState = "landing";
-
-  click.play();
+        gameState = "landing";
+        delayStartButton = true;
+        landingStartTime = millis();
+        click.play();
       }
     }
   }
@@ -2610,19 +3350,20 @@ function chooseLevel() {
   levelSekolah();
   levelRekreasi();
 
-  image(tutor, width - 52, 37, 38, 38);
-  image(beranda, 52, 37, 37, 38);
+  tutorIcon();
+  berandaIcon();
+
 }
 
 function levelRumah() {
-  image(perumahan, 135, height / 2 + 50, 141, 153);
+  image(perumahan, 135, height / 2 + 50, 145, 165);
 
   //   click area
-  if (hands.length > 0) {
+ if (hands.length > 0) {
     let index = hands[0].keypoints[8];
     let thumb = hands[0].keypoints[4];
     let distBetweenFingers = dist(index.x, index.y, thumb.x, thumb.y);
-    if (distBetweenFingers < 25) {
+    if (distBetweenFingers < 20) {
       let fingersX = (index.x + thumb.x) * 0.5;
       let fingersY = (index.y + thumb.y) * 0.5;
       if (
@@ -2631,27 +3372,27 @@ function levelRumah() {
         fingersY > height / 2 - 27 &&
         fingersY < height / 2 + 127
       ) {
-        image(perumahan, 135, height / 2 + 50, 149, 161);
+        image(perumahan, 135, height / 2 + 50,  152, 172);
 
         selectedArea = "perumahan";
         isCampaignMode = false;
 currentLevel = areaLevels.perumahan.start;
         resetAreaProgress();
-        loadLevel(currentLevel);
+        levelLoaded = false;
         startFade("play");
       }
     }
   }
 }
 function levelSekolah() {
-  image(sekolah, width / 2, height / 2 + 50, 141, 153);
+  image(sekolah, width / 2, height / 2 + 50, 145, 165);
   
    //   click area
   if (hands.length > 0) {
     let index = hands[0].keypoints[8];
     let thumb = hands[0].keypoints[4];
     let distBetweenFingers = dist(index.x, index.y, thumb.x, thumb.y);
-    if (distBetweenFingers < 25) {
+    if (distBetweenFingers < 20) {
       let fingersX = (index.x + thumb.x) * 0.5;
       let fingersY = (index.y + thumb.y) * 0.5;
       if (
@@ -2660,26 +3401,27 @@ function levelSekolah() {
         fingersY > height / 2 + 50 - 76.5 &&
         fingersY < height / 2 + 50 + 76.5
       ) {
-        image(sekolah, width / 2, height / 2 + 50, 149, 161);
+        image(sekolah, width / 2, height / 2 + 50, 152, 172);
 
         selectedArea = "sekolah";
 currentLevel = areaLevels[selectedArea].start;
         resetAreaProgress();
-        loadLevel(currentLevel);
+        // loadLevel(currentLevel);
+        levelLoaded = false;
         startFade("play");
       }
     }
   }
 }
 function levelRekreasi() {
-  image(rekreasi, width - 135, height / 2 + 50, 141, 153);
+  image(rekreasi, width - 135, height / 2 + 50, 145, 165);
 
   //   click area
   if (hands.length > 0) {
     let index = hands[0].keypoints[8];
     let thumb = hands[0].keypoints[4];
     let distBetweenFingers = dist(index.x, index.y, thumb.x, thumb.y);
-    if (distBetweenFingers < 25) {
+    if (distBetweenFingers < 20) {
       let fingersX = (index.x + thumb.x) * 0.5;
       let fingersY = (index.y + thumb.y) * 0.5;
       if (
@@ -2688,17 +3430,109 @@ function levelRekreasi() {
         fingersY > height / 2 + 50 - 76.5 &&
         fingersY < height / 2 + 50 + 76.5
       ) {
-        image(rekreasi, width - 135, height / 2 + 50, 149, 161);
+        image(rekreasi, width - 135, height / 2 + 50,  152, 172);
 
         selectedArea = "rekreasi";
 currentLevel = areaLevels[selectedArea].start;
         resetAreaProgress();
-        loadLevel(currentLevel);
+        // loadLevel(currentLevel);
+        levelLoaded = false;
         startFade("play");
       }
     }
   }
 }
+
+function tutorIcon(){
+
+  push();
+
+  image(tutor, width - 52, 37, 38, 38);
+  fill(255, 255, 255);
+  stroke(89, 26, 41);
+  strokeWeight(4);
+  textSize(12);
+  text("Tutorial", width - 52, 71);
+
+  pop();
+
+
+    if (hands.length > 0) {
+    let index = hands[0].keypoints[8];
+    let thumb = hands[0].keypoints[4];
+    let distBetweenFingers = dist(index.x, index.y, thumb.x, thumb.y);
+    if (distBetweenFingers < 25) {
+      let fingersX = (index.x + thumb.x) * 0.5;
+      let fingersY = (index.y + thumb.y) * 0.5;
+      if (
+        fingersX > width - 71 &&
+        fingersX < width - 33 &&
+        fingersY > 18 &&
+        fingersY < 56
+      ) {
+        image(tutor, width - 52, 37, 43, 43);
+
+        tutorCooldown = true;
+
+        calibrateStep = 1;
+        resetCalibrateState();
+        calibrateFromChoose = true;
+        gameState = "calibrate";
+        // startFade("calibrate");
+        click.play();
+
+        setTimeout(() => {
+    tutorCooldown = false;
+  }, 800);
+
+}
+    }
+  }
+}
+function berandaIcon(){
+
+  push();
+
+  image(beranda, 52, 37, 37, 38);
+  fill(255, 255, 255);
+  stroke(89, 26, 41);
+  strokeWeight(4);
+  textSize(12);
+  text("Beranda", 52, 71);
+
+  pop();
+
+    if (hands.length > 0) {
+    let index = hands[0].keypoints[8];
+    let thumb = hands[0].keypoints[4];
+    let distBetweenFingers = dist(index.x, index.y, thumb.x, thumb.y);
+    if (distBetweenFingers < 25) {
+      let fingersX = (index.x + thumb.x) * 0.5;
+      let fingersY = (index.y + thumb.y) * 0.5;
+      if (
+        fingersX > 34 &&
+        fingersX < 71 &&
+        fingersY > 18 &&
+        fingersY < 56
+      ) {
+       berandaCooldown = true;
+
+      //  song.stop();
+
+  image(beranda, 52, 37, 43, 43);
+
+  resetGameVariables();
+  gameState = "landing";
+  click.play();
+
+  setTimeout(() => {
+    berandaCooldown = false;
+  }, 800);
+      }
+  }
+}
+}
+
 
 function resetAreaProgress() {
   score = 0;
@@ -2730,18 +3564,18 @@ function resetGameVariables() {
   currentLevel = 1;
   levelCompleted = false;
   levelStarted = false;
+  levelLoaded = false;
 
-  // Score & Reward
+
   score = 0;
   winReady = false;
   winPlayed = false;
 
-  // UI
+
   hintVisible = false;
   jedaVisible = false;
   showHint = false;
 
-  // Asset terkait reward
   badgeImg = null;
 
   calibrated = false;
