@@ -2430,7 +2430,7 @@ function loadLevel(level) {
   } else if (level === 6) {
     correctHint = 3;
   } else if (level === 7) {
-    correctHint = 4;
+    correctHint = 3;
   } else if (level === 8) {
     correctHint = 2;
   } else if (level === 9) {
@@ -2839,48 +2839,48 @@ function loadLevel(level) {
         startPos: createVector(117, 274),
         targetPos: bins[0].pos,
       },
-      // {
-      //   object: mcd,
-      //   name: "Bungkusan makanan",
-      //   pos: createVector(471, 275),
-      //   startPos: createVector(471, 275),
-      //   targetPos: bins[1].pos,
-      // },
-      // {
-      //   object: ikan,
-      //   name: "Tulang ikan",
-      //   pos: createVector(196, 252),
-      //   startPos: createVector(196, 252),
-      //   targetPos: bins[0].pos,
-      // },
-      // {
-      //   object: baygon,
-      //   name: "Semprotan anti nyamuk",
-      //   pos: createVector(265, 322),
-      //   startPos: createVector(265, 322),
-      //   targetPos: bins[2].pos,
-      // },
-      // {
-      //   object: sandal,
-      //   name: "Sandal bekas",
-      //   pos: createVector(386, 345),
-      //   startPos: createVector(386, 345),
-      //   targetPos: bins[1].pos,
-      // },
-      // {
-      //   object: batre,
-      //   name: "Baterai bekas",
-      //   pos: createVector(315, 235),
-      //   startPos: createVector(315, 235),
-      //   targetPos: bins[2].pos,
-      // },
-      // {
-      //   object: ranting,
-      //   name: "Ranting pohon",
-      //   pos: createVector(133, 337),
-      //   startPos: createVector(133, 337),
-      //   targetPos: bins[0].pos,
-      // },
+      {
+        object: mcd,
+        name: "Bungkusan makanan",
+        pos: createVector(471, 275),
+        startPos: createVector(471, 275),
+        targetPos: bins[1].pos,
+      },
+      {
+        object: ikan,
+        name: "Tulang ikan",
+        pos: createVector(196, 252),
+        startPos: createVector(196, 252),
+        targetPos: bins[0].pos,
+      },
+      {
+        object: baygon,
+        name: "Semprotan anti nyamuk",
+        pos: createVector(265, 322),
+        startPos: createVector(265, 322),
+        targetPos: bins[2].pos,
+      },
+      {
+        object: sandal,
+        name: "Sandal bekas",
+        pos: createVector(386, 345),
+        startPos: createVector(386, 345),
+        targetPos: bins[1].pos,
+      },
+      {
+        object: batre,
+        name: "Baterai bekas",
+        pos: createVector(315, 235),
+        startPos: createVector(315, 235),
+        targetPos: bins[2].pos,
+      },
+      {
+        object: ranting,
+        name: "Ranting pohon",
+        pos: createVector(133, 337),
+        startPos: createVector(133, 337),
+        targetPos: bins[0].pos,
+      },
     ];
   }
   
