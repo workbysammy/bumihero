@@ -1,7 +1,7 @@
 let assetsLoaded = false;
 let bumiheroStarted = false;
 
-let devMode = true; //ganti tru kl mau skippoy
+let devMode = false; //ganti tru kl mau skippoy
 
 let canvas;
 let target;
@@ -437,11 +437,13 @@ function preload() {
 }
 
 function setup() {
+  // canvas = createCanvas(1280, 720);
   canvas = createCanvas(640, 480);
   imageMode(CENTER);
   textAlign(CENTER);
 
   video = createCapture(VIDEO, { flipped: true });
+  // video.size(1280, 720);
   video.size(640, 480);
   video.position(canvas.width + 100, 0);
   video.hide();
@@ -3356,7 +3358,7 @@ function chooseLevel() {
 }
 
 function levelRumah() {
-  image(perumahan, 135, height / 2 + 50, 145, 165);
+  image(perumahan, 135, height / 2 + 19, 136, 164);
 
   //   click area
  if (hands.length > 0) {
@@ -3367,12 +3369,12 @@ function levelRumah() {
       let fingersX = (index.x + thumb.x) * 0.5;
       let fingersY = (index.y + thumb.y) * 0.5;
       if (
-        fingersX > 64 &&
-        fingersX < 206 &&
-        fingersY > height / 2 - 27 &&
-        fingersY < height / 2 + 127
+        fingersX > 135 - 68 &&
+        fingersX < 135 + 68 &&
+        fingersY > height / 2 + 19 - 82 &&
+        fingersY < height / 2 + 19 + 82
       ) {
-        image(perumahan, 135, height / 2 + 50,  152, 172);
+        image(perumahan, 135, height / 2 + 19,  143, 171);
 
         selectedArea = "perumahan";
         isCampaignMode = false;
@@ -3385,7 +3387,7 @@ currentLevel = areaLevels.perumahan.start;
   }
 }
 function levelSekolah() {
-  image(sekolah, width / 2, height / 2 + 50, 145, 165);
+  image(sekolah, width / 2, height / 2 + 19, 149, 164);
   
    //   click area
   if (hands.length > 0) {
@@ -3396,12 +3398,12 @@ function levelSekolah() {
       let fingersX = (index.x + thumb.x) * 0.5;
       let fingersY = (index.y + thumb.y) * 0.5;
       if (
-        fingersX >  width / 2 - 70.5 &&
-        fingersX <  width / 2 + 70.5 &&
-        fingersY > height / 2 + 50 - 76.5 &&
-        fingersY < height / 2 + 50 + 76.5
+        fingersX > width / 2 - 74.5 &&
+        fingersX < width / 2 + 74.5 &&
+        fingersY > height / 2 + 19 - 82 &&
+        fingersY < height / 2 + 19 + 82
       ) {
-        image(sekolah, width / 2, height / 2 + 50, 152, 172);
+        image(sekolah, width / 2, height / 2 + 19, 156, 171);
 
         selectedArea = "sekolah";
 currentLevel = areaLevels[selectedArea].start;
@@ -3414,7 +3416,7 @@ currentLevel = areaLevels[selectedArea].start;
   }
 }
 function levelRekreasi() {
-  image(rekreasi, width - 135, height / 2 + 50, 145, 165);
+  image(rekreasi, width - 135, height / 2 + 19, 145, 164);
 
   //   click area
   if (hands.length > 0) {
@@ -3425,12 +3427,12 @@ function levelRekreasi() {
       let fingersX = (index.x + thumb.x) * 0.5;
       let fingersY = (index.y + thumb.y) * 0.5;
       if (
-        fingersX >  width - 135 - 70.5 &&
-        fingersX <  width - 135 + 70.5 &&
-        fingersY > height / 2 + 50 - 76.5 &&
-        fingersY < height / 2 + 50 + 76.5
+        fingersX > width - 135 - 72.5 &&
+        fingersX < width - 135 + 72.5 &&
+        fingersY > height / 2 + 19 - 82 &&
+        fingersY < height / 2 + 19 + 82
       ) {
-        image(rekreasi, width - 135, height / 2 + 50,  152, 172);
+        image(rekreasi, width - 135, height / 2 + 19,  152, 171);
 
         selectedArea = "rekreasi";
 currentLevel = areaLevels[selectedArea].start;
