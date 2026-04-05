@@ -236,25 +236,50 @@ let currentImpactSound = null;
 let bodySegmentation;
 let segmentation;
 
-let contrastScore = 0;
+let isSegmentationRunning = false;
+ // BG METRICS
+let contrastRatio = 0;
 let brightnessAvg = 0;
 let bgComplexity = 0;
 
-let isReady = false;
-let isTooDark = false;
-let isTooBright = false;
+// CONDITIONS
+let lightStatus = "good";
 let isBackgroundBusy = false;
 let goodContrast = false;
 
-let segOptions = {
-  maskType: "background",
-};
+// BG STATE
+let canTrigger = true;  
+let bgHoldStart = 0;
+let bgValid = false;
 
-let readyFrames = 0;
-let REQUIRED_FRAMES = 30; // ~1 second at 30fps
+let centerX;
+let startY;
+let spacing = 70;
 
-let calibTooDark, calibTooBright, calibBusy, calibContrast, calibGood;
-let isSegmentationRunning = false;
+// let contrastScore = 0;
+// let brightnessAvg = 0;
+// let bgComplexity = 0;
+
+// let isReady = false;
+// let isTooDark = false;
+// let isTooBright = false;
+// let isBackgroundBusy = false;
+// let goodContrast = false;
+
+// let segOptions = {
+//   maskType: "background",
+// };
+
+// let readyFrames = 0;
+// let REQUIRED_FRAMES = 30; // ~1 second at 30fps
+
+// let calibTooDark, calibTooBright, calibBusy, calibContrast, calibGood;
+// let isSegmentationRunning = false;
+
+// let handDetectedInBg = false;
+// let handHoldStartBg = 0;
+// let contrastRatio = 0;
+
 
 
 function preload() {
@@ -406,6 +431,14 @@ function preload() {
 
   mulaiButton = loadImage("calibrate/MULAIBERMAIN_BUTTON.png");
 
+  // calib bg
+    good = loadImage("calibrate/ALLGOOD.png");
+  bad = loadImage("calibrate/BADCONDITION.png");
+  angkatlagi = loadImage("calibrate/SUDAHPINDAH.png");
+  caliblatar = loadImage("calibrate/CALIBBG_BG.png");
+  angkat1 = loadImage("calibrate/angkat1.png");
+  caliblatarins = loadImage("calibrate/INSTRUCTION1.png");
+
   // choose
   perumahan = loadImage("choose/PERUMAHAN.png");
   sekolah = loadImage("choose/SEKOLAH.png");
@@ -437,13 +470,11 @@ function preload() {
 }
 
 function setup() {
-  // canvas = createCanvas(1280, 720);
   canvas = createCanvas(640, 480);
   imageMode(CENTER);
   textAlign(CENTER);
 
   video = createCapture(VIDEO, { flipped: true });
-  // video.size(1280, 720);
   video.size(640, 480);
   video.position(canvas.width + 100, 0);
   video.hide();
@@ -458,6 +489,7 @@ function setup() {
     assetsLoaded = true;
     // gameState = "landing";
   });
+    
 
   hintContents = {
     1: hint1,
@@ -484,12 +516,14 @@ function setup() {
   };
 
   if (devMode) {
-    currentLevel = 9;
-    loadLevel(currentLevel);
-    gameState = "play";
+    // currentLevel = 9;
+    // loadLevel(currentLevel);
+    // gameState = "play";
+    gameState = "calibrate";
   }
 
-
+  centerX = 100;
+  startY = height / 2 - 90;
 }
 function draw() {
 
@@ -796,6 +830,10 @@ function resetCalibrateState() {
   nextCalibrateStep = null;
 
   introFinished = false;
+
+  canTrigger = true;
+bgValid = false;
+bgHoldStart = 0;
 
   calibintro.setFrame(0);
   calibintro.play();
@@ -1409,36 +1447,80 @@ image(calib4, width / 2, height / 2, width, height);
     text(handMessage, width / 2, height / 2);
   }
 }
+function gotSegmentationResults(result) {
+  segmentation = result;
+
+  console.log("Segmentation callback fired at", millis());
+}
+
+function getLuminance(r, g, b) {
+  let srgb = [r, g, b].map(v => {
+    v /= 255;
+    return v <= 0.03928
+      ? v / 12.92
+      : pow((v + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * srgb[0] + 0.7152 * srgb[1] + 0.0722 * srgb[2];
+}
+
+function isHandRaised() {
+  if (hands.length === 0) return false;
+
+  let wrist = hands[0].keypoints[0];
+  let index = hands[0].keypoints[8];
+
+  return index.y < wrist.y - 10;
+}
+
+// ===== MAIN ANALYSIS =====
 function analyzeScene() {
-  if (!segmentation) return;
+  // ===== GUARD (ANTI CRASH) =====
+  if (!segmentation || hands.length === 0) return;
 
   video.loadPixels();
   segmentation.mask.loadPixels();
 
-  let fgSum = 0;
-  let bgSum = 0;
-  let fgCount = 0;
-  let bgCount = 0;
+  let fgR = 0, fgG = 0, fgB = 0, fgCount = 0;
+  let bgR = 0, bgG = 0, bgB = 0, bgCount = 0;
 
   let brightnessTotal = 0;
   let bgDiffSum = 0;
   let prevBgBrightness = null;
 
+  let keypoints = hands[0].keypoints;
+
   for (let i = 0; i < video.pixels.length; i += 4) {
+    let x = (i / 4) % video.width;
+    let y = floor((i / 4) / video.width);
+
     let r = video.pixels[i];
     let g = video.pixels[i + 1];
     let b = video.pixels[i + 2];
+
     let brightness = (r + g + b) / 3;
+    brightnessTotal += brightness;
 
     let maskValue = segmentation.mask.pixels[i];
 
-    brightnessTotal += brightness;
+    // ===== detect hand pixel =====
+    let isHandPixel = false;
+    for (let p of keypoints) {
+      if (dist(x, y, p.x, p.y) < 30) {
+        isHandPixel = true;
+        break;
+      }
+    }
 
-    if (maskValue > 0) {
-      fgSum += brightness;
+    if (isHandPixel) {
+      fgR += r;
+      fgG += g;
+      fgB += b;
       fgCount++;
-    } else {
-      bgSum += brightness;
+    } 
+    else if (maskValue < 128) { // ✅ FIX (lebih stabil)
+      bgR += r;
+      bgG += g;
+      bgB += b;
       bgCount++;
 
       if (prevBgBrightness !== null) {
@@ -1448,70 +1530,221 @@ function analyzeScene() {
     }
   }
 
-  let fgAvg = fgCount > 0 ? fgSum / fgCount : 0;
-  let bgAvg = bgCount > 0 ? bgSum / bgCount : 0;
+  // ===== AVERAGES =====
+  let fgAvgR = fgCount ? fgR / fgCount : 0;
+  let fgAvgG = fgCount ? fgG / fgCount : 0;
+  let fgAvgB = fgCount ? fgB / fgCount : 0;
 
+  let bgAvgR = bgCount ? bgR / bgCount : 0;
+  let bgAvgG = bgCount ? bgG / bgCount : 0;
+  let bgAvgB = bgCount ? bgB / bgCount : 0;
+
+  // ===== CONTRAST =====
+  let L1 = getLuminance(fgAvgR, fgAvgG, fgAvgB);
+  let L2 = getLuminance(bgAvgR, bgAvgG, bgAvgB);
+
+  contrastRatio = (max(L1, L2) + 0.05) / (min(L1, L2) + 0.05);
+
+  // ===== METRICS =====
   brightnessAvg = brightnessTotal / (video.pixels.length / 4);
-  contrastScore = abs(fgAvg - bgAvg);
-  bgComplexity = bgDiffSum / bgCount;
+  bgComplexity = bgCount ? bgDiffSum / bgCount : 0;
 
-  isTooDark = brightnessAvg < 90;
-  isTooBright = brightnessAvg > 200;
+  // ===== CONDITIONS =====
+  lightStatus = brightnessAvg < 120 ? "dark"
+               : brightnessAvg > 200 ? "bright"
+               : "good";
+
   isBackgroundBusy = bgComplexity > 2.5;
-  goodContrast = contrastScore > 135;
+  goodContrast = contrastRatio >= 1;
 
-  isReady = !isTooDark && !isTooBright && !isBackgroundBusy && goodContrast;
+  // optional debug (udah clean)
+  console.log("Brightness:", brightnessAvg.toFixed(1));
+  console.log("BG Complexity:", bgComplexity.toFixed(2));
+  console.log("Contrast:", contrastRatio.toFixed(2));
 }
+
+// ===== FEEDBACK MAPPING =====
+function getFeedback() {
+  return {
+    light: lightStatus,
+    bg: !isBackgroundBusy,
+    contrast: goodContrast
+  };
+}
+function showResultUI() {
+  let fb = getFeedback();
+  let allGood = (fb.light === "good") && fb.bg && fb.contrast;
+
+  textAlign(CENTER);
+
+  if (allGood) {
+    image(good, width / 2, height - 82, 588, 112);
+    image(correct, width / 2, height / 2 - 20, 100, 100);
+  } else {
+    image(bad, width / 2, height - 82, 588, 112);
+  }
+
+  drawLightLabel(centerX, startY + spacing * 0, fb.light);
+  drawLabel(centerX, startY + spacing * 1, fb.bg, "Latar Sepi", "Latar Ramai");
+  drawLabel(centerX, startY + spacing * 2, fb.contrast, "Warna Latar Beda", "Warna Latar Mirip");
+}
+
+function drawTextStroke(str, x, y) {
+  let offset = 0.3; // ketebalan stroke
+
+  fill(0); // warna stroke (misal hitam)
+
+  // gambar text di sekeliling (8 arah)
+  text(str, x - offset, y);
+  text(str, x + offset, y);
+  text(str, x, y - offset);
+  text(str, x, y + offset);
+
+  text(str, x - offset, y - offset);
+  text(str, x + offset, y - offset);
+  text(str, x - offset, y + offset);
+  text(str, x + offset, y + offset);
+
+  // ===== MAIN TEXT (CENTER) =====
+  fill(255); // warna utama
+  text(str, x, y);
+}
+// ===== DRAW LABEL =====
+function drawLabel(x, y, isGood, goodText, badText) {
+  push();
+  rectMode(CENTER);
+
+  let label = isGood ? goodText : badText;
+
+
+  if (!label) {
+    label = isGood ? "OK" : "NOT OK";
+  }
+
+  let bgColor = isGood ? color (122, 220, 171) : color(255, 93, 86);
+
+  stroke(89, 26, 41);
+  strokeWeight(5);
+  strokeJoin(ROUND);
+  fill(bgColor);
+  rect(x, y, 148, 50, 14);
+
+  fill(255);
+  strokeWeight(4);
+  textSize(14);
+  drawTextStroke(label, x, y + 5);
+
+  pop();
+}
+function drawLightLabel(x, y, status) {
+  let textLabel;
+  let isGood = false;
+
+  if (status === "good") {
+    textLabel = "Cahaya Pas";
+    isGood = true;
+
+  } else if (status === "dark") {
+    textLabel = "Terlalu Gelap";
+
+  } else if (status === "bright") {
+    textLabel = "Terlalu Silau";
+  }
+
+  drawLabel(x, y, isGood, textLabel, textLabel);
+}
+
 function showCalibrateBg() {
-  image(calibbegron, width / 2, height / 2, width, height);
+  image(caliblatar, width / 2, height / 2, width, height);
+  let raised = hands.length > 0 && isHandRaised();
 
   // ================= INTRO =================
   if (calibratePhase === "intro") {
-
-    if (phaseStartTime === 0) {
-      phaseStartTime = millis();
-    }
-
-    textSize(18);
-    fill(255);
-    stroke(89, 26, 41);
-    strokeWeight(4);
-    text("Memeriksa tempat dan latarmu...", width / 2, height / 2);
-
-    if (millis() - phaseStartTime >= 2000) {
-      calibratePhase = "checking";
-      phaseStartTime = 0;
-    }
-
+    image(angkat1, width / 2, height / 2, 227, 139);
+    image(caliblatarins, width / 2, height - 82, 588, 112);
+    calibratePhase = "checking";
+    canTrigger = true;
     return;
   }
 
-  // ================= CORRECT =================
-  if (calibratePhase === "correct") {
-
-    if (!correctSoundPlayed) {
-      success.play();
-      correctSoundPlayed = true;
+  // ================= CHECKING =================
+  if (calibratePhase === "checking") {
+    if (!raised) {
+      image(angkat1, width / 2, height / 2, 227, 139);
+      image(caliblatarins, width / 2, height - 82, 588, 112);
+      return;
     }
 
-    image(correct, width / 2, height / 2 - 20, 100, 100);
-    image(calibGood, width / 2, height / 2, width, height);
+    if (raised && canTrigger) {
+      checkStartTime = millis();
+      calibratePhase = "checkingDelay";
+      canTrigger = false; // blok sampai tangan turun untuk recheck
+      return;
+    }
+    return;
+  }
 
-    textSize(18);
+  // ================= MEMERIKSA DELAY 3 DETIK =================
+  if (calibratePhase === "checkingDelay") {
+    textSize(20);
     fill(255);
-    stroke(89, 26, 41);
-    strokeWeight(4);
-    text(
-      "Tetap di tempat ini ya,\nbiar permainannya lancar!",
-      width / 2,
-      height / 2 + 52
-    );
+    stroke(0);
+    strokeWeight(3);
+    text("Memeriksa...", width / 2, height / 2);
 
-    if (millis() - phaseStartTime >= 2000) {
-      calibratePhase = "done";
-      phaseStartTime = 0;
+    if (millis() - checkStartTime > 1200) {
+      analyzeScene();
+      let fb = getFeedback();
+      bgValid = fb.light === "good" && fb.bg && fb.contrast;
+
+      resultStartTime = millis();
+      calibratePhase = "result";
     }
+    return;
+  }
 
+  // ================= RESULT =================
+  if (calibratePhase === "result") {
+    showResultUI();
+
+    if (bgValid) {
+      if (!correctSoundPlayed) {
+    success.play();
+    correctSoundPlayed = true;
+  }
+      // semua oke → tampil icon correct + good
+      image(good, width / 2, height - 82, 588, 112);
+      image(correct, width / 2, height / 2 - 20, 100, 100);
+
+      // tunggu 3 detik baru done
+      if (millis() - resultStartTime > 3000) {
+        calibratePhase = "done";
+        correctSoundPlayed = false;
+      }
+    } else {
+      // kondisi gagal → tampil feedback merah + bad
+      image(bad, width / 2, height - 82, 588, 112);
+
+      // kalau tangan turun → prompt angkat lagi
+      if (!raised) {
+        calibratePhase = "waitHandUp";
+      }
+    }
+    return;
+  }
+
+  // ================= WAIT HAND UP =================
+  if (calibratePhase === "waitHandUp") {
+    // tampil feedback tetap + panduan angkat tangan
+    showResultUI();
+    image(bad, width / 2, height - 82, 588, 112);
+    image(angkat1, width / 2, height / 2, 227, 139);
+
+    // kalau user angkat tangan lagi → masuk checking
+    if (raised) {
+      calibratePhase = "checking";
+      canTrigger = true;
+    }
     return;
   }
 
@@ -1519,87 +1752,14 @@ function showCalibrateBg() {
   if (calibratePhase === "done") {
     resetCalibrateState();
     nextCalibrateStep = 3;
+    checkStartTime = null;
+    resultStartTime = null;
+    canTrigger = false;
     return;
-  }
-
-  // ================= CHECKING =================
-
-  if (!segmentation) {
-    return;
-  }
-
-  analyzeScene();
-
-  let message = "";
-  let isValid = false;
-  let conditionImg = null;
-
-  if (isTooDark) {
-    message = "Tempat terlalu gelap";
-    conditionImg = calibTooDark;
-  } 
-  else if (isTooBright) {
-    message = "Tempat terlalu terang";
-    conditionImg = calibTooBright;
-  } 
-  else if (isBackgroundBusy) {
-    message = "Latar terlalu ramai";
-    conditionImg = calibBusy;
-  } 
-  else if (!goodContrast) {
-    message = "Warna kulitmu terlalu mirip\ndengan latar";
-    conditionImg = calibContrast;
-  } 
-  else {
-    isValid = true;
-    conditionImg = calibGood;
-  }
-
- // ================= HOLD LOGIC =================
-  let remainingTime = 0;
-
-  if (!isValid) {
-    readyFrames = 0;
-  } else {
-
-    if (readyFrames === 0) {
-      readyFrames = millis();
-    }
-
-    let holdTime = millis() - readyFrames;
-    remainingTime = ceil((holdDuration - holdTime) / 1000);
-
-    if (remainingTime > 0) {
-      message = "Bagus, tahan posisi...";
-    }
-
-    if (holdTime >= holdDuration) {
-      calibratePhase = "correct";
-      phaseStartTime = millis();
-      readyFrames = 0;
-      correctSoundPlayed = false;
-    }
-  }
-
-
-  if (conditionImg) {
-    image(conditionImg, width / 2, height / 2, width, height);
-  }
-
-  if (message !== "") {
-    textSize(18);
-    fill(255);
-    stroke(89, 26, 41);
-    strokeWeight(4);
-    text(message, width / 2, height / 2);
-  }
-
-  if (isValid && remainingTime > 0) {
-    textSize(40);
-    strokeWeight(6);
-    text(remainingTime, width / 2, height / 2 + 40);
   }
 }
+
+
 function showCalibratePick() {
 
   image(calib5, width / 2, height / 2, width, height);
@@ -2297,7 +2457,7 @@ function impactScreen() {
   strokeWeight(4);
   strokeJoin(ROUND);
 
-  text(getImpactText(), width / 2, 65);
+  text(getImpactText(), width / 2, 45);
   image(lihatskor, width / 2, height / 2 + 175, 226, 60);
 }
 
@@ -2430,7 +2590,7 @@ function loadLevel(level) {
   } else if (level === 6) {
     correctHint = 3;
   } else if (level === 7) {
-    correctHint = 3;
+    correctHint = 4;
   } else if (level === 8) {
     correctHint = 2;
   } else if (level === 9) {
