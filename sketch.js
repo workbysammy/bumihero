@@ -1550,7 +1550,7 @@ function analyzeScene() {
   bgComplexity = bgCount ? bgDiffSum / bgCount : 0;
 
   // ===== CONDITIONS =====
-  lightStatus = brightnessAvg < 120 ? "dark"
+  lightStatus = brightnessAvg < 97 ? "dark"
                : brightnessAvg > 200 ? "bright"
                : "good";
 
