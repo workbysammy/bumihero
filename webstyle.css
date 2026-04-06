@@ -1,0 +1,737 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: white;
+  font-family: 'MyFont', sans-serif;
+  overflow-x: hidden;
+
+}
+@font-face {
+  font-family: myFont;
+  src: url(font/Qilka.otf);
+}
+
+
+
+.logo img {
+  width: 150px;
+  margin-top: 10px;
+  display: block;
+  flex-shrink: 0;
+}
+/* NAVBAR */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  background: #5c6ea4;
+  border-bottom: 4px solid #3b2f2f;
+  border-radius: 0 0 16px 16px;
+  color: white;
+    position: sticky;
+  top: 0;
+  z-index: 1000;
+
+}
+
+.navbar nav {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+      text-shadow:
+    0em 0.12em #591A29,
+    0.05em 0.11em #591A29,
+    0.085em 0.085em #591A29,
+    0.11em 0.05em #591A29,
+    0.12em 0em #591A29,
+    0.11em -0.05em #591A29,
+    0.085em -0.085em #591A29,
+    0.05em -0.11em #591A29,
+    0em -0.12em #591A29,
+   -0.05em -0.11em #591A29,
+   -0.085em -0.085em #591A29,
+   -0.11em -0.05em #591A29,
+   -0.12em 0em #591A29,
+   -0.11em 0.05em #591A29,
+   -0.085em 0.085em #591A29,
+   -0.05em 0.11em #591A29;
+}
+
+/* BUTTON */
+.navbar .btn-primary {
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+.navbar.scrolled .btn-primary {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.btn-primary img,
+.btn-tagline img {
+  width: 140px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.btn-tagline img {
+  width: 100%;
+  max-width: 140px;
+}
+
+.btn-primary img:hover,
+.btn-tagline img:hover {
+  transform: scale(1.1);
+}
+
+/* HEADER */
+.hero {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr; 
+  align-items: center;
+  padding: 60px;
+  gap: 40px;
+}
+
+.hero-text{
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.hero-text p {
+  font-size: 20px;
+}
+
+.hero-img {
+  position: relative;
+  overflow: visible;
+}
+
+.background-img {
+ width: 100%;
+ max-width: 700px;
+}
+
+.bhumi-img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 350px;
+  width: 100%;
+  
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translate(-150%, -90%);
+    opacity: 1;
+  }
+  to {
+    transform: translate(-80%, -80%);
+    opacity: 1;
+  }
+}
+
+.animate {
+  animation: slideInLeft 1s ease-out forwards;
+}
+
+/* FEATURES */
+.features {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap:80px;
+}
+
+p{
+    color: #591A29;
+}
+.feature-active, .feature-aman, .feature-motivasi{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;           
+  padding: 60px;
+  gap: 40px;
+  justify-content: center;       
+  position: relative;
+}
+
+.feature-text {
+  display: flex;                  
+  flex-direction: column;         
+  justify-content: center;     
+  text-align: left;  
+  align-items: flex-start; 
+  font-size: 20px;
+  gap: 16px;
+}
+
+/* asset active */
+.feature-illus-active {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 300px
+}
+
+.milk-img {
+  position: absolute;
+  left: 70%;  
+  top: -70%;
+  width:50%;
+  max-width: 95px;
+  z-index: 3;
+}
+
+.active-img{
+  position: absolute;
+  top: 50%;
+  left:50%;
+  transform: translate(-50%, -50%);
+  width:100%;
+  max-width: 280px;
+  
+  z-index: 2;
+}
+
+.blue-img {
+position: relative;
+
+  width: 100%;
+  max-width: 420px;
+  z-index: 1;
+}
+
+/* asset aman */
+
+.feature-illus-aman {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 300px
+}
+
+
+.apel-img {
+  position: absolute;
+  top: -50%;
+  left: -5%;
+  width: 100%;
+  max-width: 150px;
+  z-index: 3;
+  transition: transform 0.1s linear, opacity 0.2s;
+}
+
+
+.bin-img {
+  position: absolute;
+  top: 65%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  max-width: 150px;
+  z-index: 2;
+}
+
+/* Sign overlay */
+.sign-img {
+  position: absolute;
+  top: -15%; 
+  left: 75%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 150px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 4;
+}
+
+/* asset motivasi */
+.feature-illus-motivasi {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 300px;
+}
+
+.fly-img{
+  position: absolute;       ;
+  top: 70%;
+  left:50%;
+  transform: translate(-50%, -50%);
+  width:100%;
+  max-width: 160px;
+  z-index: 5;
+}
+.monas-img{
+  position: absolute;
+  top: -30%;
+  left:60%;
+  transform: translate(-50%, -50%);
+  width:100%;
+  max-width: 120px;
+  z-index: 3;
+}
+.murid-img{
+  position: absolute;
+  top: -18%;
+  left: 26%;
+  transform: translate(-50%, -50%);
+  width:100%;
+  max-width: 100px;
+  z-index: 4;
+}
+.rumah-img{
+  position: absolute;
+  top: -8%;
+  left:68%;
+  width:100%;
+  max-width: 100px;
+  z-index: 2;
+}
+
+.feature-text-aman{
+    text-align: right;
+    font-size: 20px;
+}
+.feature-text-aman p{
+  padding-top: 16px;
+
+}
+
+
+/* INSTRUCTIONS */
+.instructions {
+  background: #FFD855;
+  border-radius: 16px 16px 0 0;
+  padding: 60px;
+  text-align: center;
+  justify-items: center;
+}
+
+.instructions img {
+  margin-bottom: 30px;
+}
+
+.instruction-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 56px 48px;
+  justify-items: center;
+  width: fit-content;
+
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 230px;
+  width:330px;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  background: #5c6ea4;
+  color: white;
+  text-shadow:
+    0em 0.12em #591A29,
+    0.05em 0.11em #591A29,
+    0.085em 0.085em #591A29,
+    0.11em 0.05em #591A29,
+    0.12em 0em #591A29,
+    0.11em -0.05em #591A29,
+    0.085em -0.085em #591A29,
+    0.05em -0.11em #591A29,
+    0em -0.12em #591A29,
+   -0.05em -0.11em #591A29,
+   -0.085em -0.085em #591A29,
+   -0.11em -0.05em #591A29,
+   -0.12em 0em #591A29,
+   -0.11em 0.05em #591A29,
+   -0.085em 0.085em #591A29,
+   -0.05em 0.11em #591A29;
+  padding: 48px;
+  padding-top: 56px;
+  border-radius: 16px;
+  border: 3px solid #3b2f2f;
+  font-size: 20px;
+
+  transition: transform 0.2s ease;
+}
+@keyframes wiggle {
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(-3deg); }
+  50%  { transform: rotate(3deg); }
+  75%  { transform: rotate(-2deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.card:hover {
+  animation: wiggle 0.35s ease;
+}
+
+.icon-img{
+  position: absolute;
+  top: -23%;
+  width: 100%;
+  max-width: 100px;
+}
+/* CTA */
+.cta {
+  display: flex;
+  flex-direction: column; 
+  align-items: center;
+  justify-content: center; 
+
+  position: relative;
+  min-height: 100vh;
+
+  background-image: url('asset/ready-08.png');
+  background-size: cover;     
+  background-position: center;
+  background-repeat: no-repeat;            
+  box-sizing: border-box;
+  overflow: hidden;   
+   
+}
+.cta-content {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.awan-img{
+  position: absolute;
+  top: 20%;
+  left: -20%;
+  transform: translate(-50%, -50%);
+  width:100%;
+  max-width: 400px;
+  z-index: 1;
+}
+.awan2-img{
+  position: absolute;
+  top: 30%;
+  right: -30%;
+  transform: translate(-50%, -50%);
+  width:100%;
+  max-width: 250px;
+  z-index: 2;
+}
+
+.tree2-img{
+  position: absolute;
+  top: 110%;
+  right: -5%;
+  transform: translate(-50%, -50%);
+  width:100%;
+  max-width: 250px;
+  z-index: 2;
+}  
+.tree-img{
+  position: absolute;
+  top: 110%;
+  left: 15%;
+  transform: translate(-50%, -50%);
+  width:100%;
+  max-width: 250px;
+  z-index: 3;
+}
+.land-img {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 4;
+}
+
+.title-img {
+  width: 100%; 
+  max-width: 400px;
+}
+
+/* RESPONSIVE */
+@media (min-width: 1040px) and (max-width: 1070px){
+    .feature-illus-motivasi .murid-img {
+    left: 18%;
+  }
+}
+@media (max-width: 1024px) {
+
+    .background-img {
+    width: 100%;
+  }
+
+  .bhumi-img {
+    max-width: 220px;          
+  }
+  .features{
+    gap: 16px;
+  }
+    .feature-active, .feature-aman, .feature-motivasi{
+    padding: 16px;
+  }
+  .feature-illus-active .active-img {
+    max-width: 220px;
+  }
+  .feature-illus-active .milk-img {
+    max-width: 80px;
+    top: -65%;
+    right: -40%;
+  }
+
+  .feature-illus-aman .apel-img {
+
+    top: -20%;
+    left: -30%;
+
+  }
+    .feature-illus-aman .bin-img {
+
+    top: 70%;
+    left: 50%;
+    max-width: 120px;
+
+  }
+     .feature-illus-aman .sign-img {
+
+    top: 0;
+    left: 80%;
+    max-width: 110px;
+
+  }
+
+  .feature-illus-motivasi .fly-img {
+    max-width: 120px;
+  }
+
+  .feature-illus-motivasi .monas-img {
+    max-width: 100px;
+    top: -12%;
+    left:60%;
+  }
+
+  .feature-illus-motivasi .murid-img {
+    max-width: 80px;
+    top: -2%;
+    left: 25%;
+  }
+
+  .feature-illus-motivasi .rumah-img {
+    max-width: 80px;
+    top: 5%;
+    left:70%;
+  }
+
+  .card{
+    width: 100%;
+    height: 95%;
+    font-size: 16px;
+  }
+   .icon-img {
+    max-width: 75px;
+  }
+  .cta{
+      background-image: url('asset/ready-10.png');
+  }
+  .cta-content {
+  top: 45%;
+  left: 50%;
+}
+  .tree2-img{
+  top: 110%;
+  right: -10%;
+}  
+}
+
+@media (max-width: 900px){
+  .awan2-img{
+  right: -40%;
+}
+  .tree2-img{
+  top: 110%;
+  right: -15%;
+  max-width: 250px;
+}  
+
+  .feature-illus-motivasi .murid-img {
+    top: 0%;
+    left: 22%;
+  }
+
+}
+@media (min-width: 601px) and (max-width: 790px) {
+    .feature-illus-motivasi .murid-img {
+    left: 10%;
+  }
+}
+@media (max-width: 600px) {
+  
+  .hero {
+    grid-template-columns: 1fr; 
+    gap: 30px;
+    justify-items: center;    
+    text-align: center;
+    padding: 40px 32px;
+  }
+
+  .hero-text {
+    text-align: center;        
+    align-items: center;        
+    margin: 0 40px;
+  }
+
+  .hero-text p {
+    font-size: 16px;            
+  }
+
+  .background-img {
+    max-width: 400px;
+  }
+
+  .bhumi-img {
+    max-width: 200px;          
+  }
+
+  /* feature phone */
+  .features{
+    gap: 0;
+  }
+  .feature-active, .feature-aman, .feature-motivasi{
+    padding: 0;
+    height: 220px;
+  }
+  .feature-illus-active, .feature-illus-aman, .feature-illus-motivasi{
+    height: 250px;
+  }
+  .feature-text, .feature-text-aman{
+    font-size: 12px;
+    gap: 16px;
+  }
+    .feature-illus-active .milk-img {
+    max-width: 50px;
+    top: -50%;
+    right: -20%;
+  }
+    .feature-illus-active .active-img {
+    max-width: 140px;
+  }
+    .feature-illus-aman .apel-img {
+
+    top: -20%;
+    left: -60%;
+    max-width: 90px;
+
+  }
+
+    .feature-illus-aman .bin-img {
+    top: 65%;
+    left: 50%;
+    max-width: 70px;
+
+  }
+     .feature-illus-aman .sign-img {
+
+    top: 12%;
+    left: 80%;
+    max-width: 65px;
+  }
+    .feature-illus-motivasi .fly-img {
+    max-width: 70px;
+    top: 65%;
+  }
+
+  .feature-illus-motivasi .monas-img {
+    max-width: 60px;
+    top: 5%;
+    left:65%;
+  }
+
+  .feature-illus-motivasi .murid-img {
+    max-width: 40px;
+    top: 15%;
+    left: 35%;
+  }
+
+  .feature-illus-motivasi .rumah-img {
+    max-width: 40px;
+    top: 19%;
+    left:68%;
+  }
+
+  /* instruction hp*/
+   .instruction-grid {
+    grid-template-columns: 1fr; 
+    gap: 24px;
+    justify-items: center;
+  }
+
+  .card {
+    width: 90%;
+    height: 90%;
+    padding: 40px 20px;
+    font-size: 14px;
+    padding-top: 64px;
+  }
+
+  .icon-img {
+    max-width: 70px;
+    top: -30%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+    .title-img{
+    max-width: 420px;
+  }
+    .cta{
+      background-image: url('asset/ready-09.png');
+  }
+    .tree2-img{
+  top: 115%;
+  right: -25%;
+  max-width: 200px;
+}  
+.tree-img{
+  top: 115%;
+  left: 10%;
+  max-width: 200px;
+}
+.awan-img{
+    top: 30%;
+  left: -25%;
+  max-width: 200px;
+}
+.awan2-img{
+  max-width: 200px;
+  top: 40%;
+  right: -70%;
+}
+}
