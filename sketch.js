@@ -476,8 +476,8 @@ function setup() {
 
   video = createCapture(VIDEO, { flipped: true });
   video.size(640, 480);
-  video.position(canvas.width + 100, 0);
-  video.hide();
+  // video.position(canvas.width + 100, 0);
+  // video.hide();
 
   handPose = ml5.handPose({ flipped: true }, () => {
     handPose.detectStart(video, gotHands);
