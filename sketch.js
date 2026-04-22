@@ -1554,7 +1554,7 @@ function analyzeScene() {
                : brightnessAvg > 200 ? "bright"
                : "good";
 
-  isBackgroundBusy = bgComplexity > 3;
+  isBackgroundBusy = bgComplexity > 3.8;
   goodContrast = contrastRatio >= 1;
 
   // optional debug (udah clean)
