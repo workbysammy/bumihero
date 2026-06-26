@@ -49,7 +49,7 @@ let rewardShow = 0;
 let claimDelay = 2000;
 let claimUnlocked = false;
 
-let gameState = "landing";
+let gameState = "chooseCharacter";
 let landingBg;
 let delayStartButton = false;
 let landingStartTime = 0;
@@ -222,7 +222,7 @@ let levelIntroStart = 0;
 let levelIntroDuration = 2000;
 
 let levelIntroImages = [];
-let impactGood, impactMid, impactBad;
+let impactGoodBhumi, impactMidBhumi, impactBadBhumi;
 let lihatskor;
 let impactStartTime = 0;
 
@@ -256,31 +256,36 @@ let centerX;
 let startY;
 let spacing = 70;
 
-// let contrastScore = 0;
-// let brightnessAvg = 0;
-// let bgComplexity = 0;
+let tooCloseStartTime = null;
 
-// let isReady = false;
-// let isTooDark = false;
-// let isTooBright = false;
-// let isBackgroundBusy = false;
-// let goodContrast = false;
+let showTooCloseWarning = false;
+let warningStartTime = 0;
 
-// let segOptions = {
-//   maskType: "background",
-// };
+let warningDuration = 3000;
+let warningCooldown = 5000; 
+let warningPopupX;
+let popupTargetX;
 
-// let readyFrames = 0;
-// let REQUIRED_FRAMES = 30; // ~1 second at 30fps
+let lastWarningTime = 0;
+let mundurPopup;
 
-// let calibTooDark, calibTooBright, calibBusy, calibContrast, calibGood;
-// let isSegmentationRunning = false;
+// choose chara
+let selectedCharacter = null;
+let landingBhumi;
+let landingPertiwi;
 
-// let handDetectedInBg = false;
-// let handHoldStartBg = 0;
-// let contrastRatio = 0;
+let calibintroBhumi;
+let calibintroAsri;
 
+let calibtransBhumi;
+let calibtransAsri;
 
+let calibrateFailCount = 0;
+
+let showProceedPopup = false;
+let proceedButtonHover = false;
+
+let ngertiClicked = false;
 
 function preload() {
   calibTooDark = loadImage("calibrate/BG_GELAP.png");
@@ -294,6 +299,7 @@ function preload() {
  
   // background
   landingBg = loadImage("background/LANDING.png");
+  landingPertiwi = loadImage("background/LANDING_GIRL.png");
   jedaPage = loadImage("background/JEDA_PAGE.png");
   bg1 = loadImage("background/DAPUR.png");
   bg2 = loadImage("background/HALAMAN.png");
@@ -382,6 +388,16 @@ function preload() {
   hint8 = loadImage("hints/BANTUAN8.png");
   hint9 = loadImage("hints/BANTUAN9.png");
 
+  hinttiwi1 = loadImage("hints/TIWI_BANTUAN1.png");
+  hinttiwi2 = loadImage("hints/TIWI_BANTUAN2.png");
+  hinttiwi3 = loadImage("hints/TIWI_BANTUAN3.png");
+  hinttiwi4 = loadImage("hints/TIWI_BANTUAN4.png");
+  hinttiwi5 = loadImage("hints/TIWI_BANTUAN5.png");
+  hinttiwi6 = loadImage("hints/TIWI_BANTUAN6.png");
+  hinttiwi7 = loadImage("hints/TIWI_BANTUAN7.png");
+  hinttiwi8 = loadImage("hints/TIWI_BANTUAN8.png");
+  hinttiwi9 = loadImage("hints/TIWI_BANTUAN9.png");
+
   //   badge
   badge1 = loadImage("badge/BADGE_1.gif");
   badge2 = loadImage("badge/BADGE_2.gif");
@@ -420,10 +436,13 @@ function preload() {
   calib5 = loadImage("calibrate/CALIB_5.png");
   calib6 = loadImage("calibrate/CALIB_6.png");
 
-  calibintro = loadImage("calibrate/CALIB_INTRO.gif");
+  calibintroBhumi = loadImage("calibrate/CALIB_INTRO.gif");
+  calibintroAsri = loadImage("calibrate/ASRI_INTROCALIB.gif");
   calibpick = loadImage("calibrate/PICK_TUTORIAL2.gif");
   calibdrag = loadImage("calibrate/REVISED_THROW.gif");
-  calibtrans = loadImage("calibrate/CALIB_FINISHED.gif");
+  calibtransBhumi = loadImage("calibrate/CALIB_FINISHED.gif");
+  calibtransAsri = loadImage("calibrate/ASRI_FINISHED.gif");
+  bgwarning = loadImage("calibrate/bgwarning.png");
 
   hi5 = loadImage("calibrate/HI5.png");
   openhand = loadImage("calibrate/OPENHAND.png");
@@ -462,11 +481,23 @@ function preload() {
   levelIntroImages[7] = loadImage("ui/lv3.png");
   // impact score
     // impact images (sesuai score)
-  impactGood = loadImage("win/GOODIMPACT.gif"); 
-  impactMid  = loadImage("win/MIDIMPACT.gif");   
-  impactBad  = loadImage("win/BANJIR.gif");    
+  impactGoodBhumi = loadImage("win/GOODIMPACT.gif"); 
+  impactMidBhumi  = loadImage("win/MIDIMPACT.gif");   
+  impactBadBhumi  = loadImage("win/BANJIR.gif");   
+  
+  impactGoodAsri = loadImage("win/WINBEST_ASRI.png"); 
+  impactMidAsri  = loadImage("win/WINMID_ASRI.png");   
+  impactBadAsri  = loadImage("win/WINBAD_ASRI.png"); 
   // tombol ke win screen
   lihatskor = loadImage("ui/LIATSKOR_BUTTON.png");
+
+  mundurPopup = loadImage("ui/notif_mundur.png");
+
+  charabg = loadImage("selectchara/BG_SELECTCHARA.png");
+  selectbhumi = loadImage("selectchara/SELECT_BHUMI1.png");
+  selecttiwi = loadImage("selectchara/SELECT_TIWI2.png");
+  pilihbutton = loadImage("selectchara/PILIH_BUTTON.png");
+  ngertiButton = loadImage("ui/mengerti_button.png");
 }
 
 function setup() {
@@ -491,7 +522,19 @@ function setup() {
   });
     
 
-  hintContents = {
+  hintContentsTiwi= {
+    1: hinttiwi1,
+    2: hinttiwi2,
+    3: hinttiwi3,
+    4: hinttiwi4,
+    5: hinttiwi5,
+    6: hinttiwi6,
+    7: hinttiwi7,
+    8: hinttiwi8,
+    9: hinttiwi9,
+  };
+
+   hintContents = {
     1: hint1,
     2: hint2,
     3: hint3,
@@ -516,14 +559,15 @@ function setup() {
   };
 
   if (devMode) {
-    // currentLevel = 9;
-    // loadLevel(currentLevel);
-    // gameState = "play";
-    gameState = "calibrate";
+    currentLevel = 1;
+    loadLevel(currentLevel);
+    gameState = "play";
   }
 
   centerX = 100;
   startY = height / 2 - 90;
+
+  warningPopupX = width + 300;
 }
 function draw() {
 
@@ -553,7 +597,7 @@ function draw() {
     // bgm logic
   if (gameState !== lastGameState) {
 
-    if (gameState === "landing" || gameState === "calibrate" || gameState === "choose") {
+    if (gameState === "chooseCharacter" || gameState === "landing" || gameState === "calibrate" || gameState === "choose") {
       playMusic(landingBgm);
     } 
     
@@ -583,10 +627,17 @@ function draw() {
   textFont(font1);
   image(video, width / 2, height / 2, width, height);
   console.log(gameState);
-  if (gameState === "landing") {
-    showLandingPage();
-    detectHandStartButton();
-    fadeLandingPage();
+  if (gameState === "chooseCharacter") {
+
+  chooseCharacterPage();
+  detectCharacterSelection();
+
+} else if (gameState === "landing") {
+
+  showLandingPage();
+  detectHandStartButton();
+  fadeLandingPage();
+  
     if (delayStartButton) {
       if (millis() - landingStartTime > 2000) {
         delayStartButton = false;
@@ -610,7 +661,9 @@ function draw() {
 
     playGame();
 
-    
+    updateTooCloseWarning();
+    drawTooCloseWarning();
+
       if (showHint) {
         let elapsed = millis() - unlockTime;
 
@@ -659,7 +712,7 @@ function draw() {
     if (
       !(
         gameState === "calibrate" &&
-        (calibrateStep === 1 || calibrateStep === 2)
+        calibrateStep === 1
       )
     ) {
       handVisual();
@@ -744,9 +797,59 @@ function startBumiHero() {
 
   setTimeout(() => {
     assetsLoaded = true;
-    gameState = "landing";
+    gameState = "chooseCharacter";
     console.log("Assets ready → Game Start");
   }, 100);
+}
+function chooseCharacterPage() {
+
+  image(charabg, width/2, height/2, width, height);
+  image(selectbhumi, 58 + 231/2, height/2 - 122 + 279/2, 231, 279);
+image(selecttiwi, 500.5, 257.5, 231, 279);
+  image(pilihbutton, 156, 432, 182, 60);
+  image(pilihbutton, 483, 432, 182, 60);
+ }
+
+function detectCharacterSelection(){
+// tombol bhumi
+if (hands.length > 0) {
+  let index = hands[0].keypoints[8];
+  let thumb = hands[0].keypoints[4];
+  let distBetweenFingers = dist(index.x, index.y, thumb.x, thumb.y);
+
+  let fingersX = (index.x + thumb.x) * 0.5;
+  let fingersY = (index.y + thumb.y) * 0.5;
+
+  fill(255, 0, 0, 150);
+  noStroke();
+  ellipse(index.x, index.y, 25, 25);
+  ellipse(thumb.x, thumb.y, 25, 25);
+
+  if (distBetweenFingers < 25) {
+    if (
+      fingersX > 65 &&
+      fingersX < 247 &&
+      fingersY > 402 &&
+      fingersY < 462
+    ) {
+      selectedCharacter = "bhumi";
+      click.play();
+      gameState = "landing";
+    }
+
+    if (
+      fingersX > 392 &&
+      fingersX < 574 &&
+      fingersY > 402 &&
+      fingersY < 462
+) {
+  selectedCharacter = "pertiwi";
+  click.play();
+  gameState = "landing";
+}
+  }
+}
+
 }
 // draw landing
 function fadeLandingPage() {
@@ -757,7 +860,13 @@ function fadeLandingPage() {
   }
 }
 function showLandingPage() {
-  image(landingBg, width / 2, height / 2, width, height);
+  if(selectedCharacter === "bhumi"){
+    image(landingBg, width/2, height/2, width, height);
+  }
+
+  if(selectedCharacter === "pertiwi"){
+    image(landingPertiwi, width/2, height/2, width, height);
+  }
 
   textFont(font1);
   fill(255, 255, 255);
@@ -835,8 +944,14 @@ function resetCalibrateState() {
 bgValid = false;
 bgHoldStart = 0;
 
-  calibintro.setFrame(0);
-  calibintro.play();
+ if (selectedCharacter === "bhumi") {
+    currentCalibIntro = calibintroBhumi;
+  } else {
+    currentCalibIntro = calibintroAsri;
+  }
+
+  currentCalibIntro.setFrame(0);
+  currentCalibIntro.play();
 
   calibratePhase = "intro";
   phaseStartTime = 0;
@@ -887,24 +1002,38 @@ function calibratePage() {
     showCalibrateTransition();
   }
 }
+
 function showCalibrateIntro() {
-    if (!introSoundPlayed) {
+
+  if (!introSoundPlayed) {
     calibpop.play();
     introSoundPlayed = true;
   }
 
   image(calibbg, width / 2, height / 2, width, height);
 
-  image(calibintro, width / 2, height / 2, width, height);
+  let currentCalibIntro;
 
-if (!introFinished &&
-    calibintro.getCurrentFrame() >= calibintro.numFrames() - 2) {
+  if (selectedCharacter === "bhumi") {
+    currentCalibIntro = calibintroBhumi;
+  } else {
+    currentCalibIntro = calibintroAsri;
+  }
 
-  calibintro.pause();
-  introFinished = true;
-  introSoundPlayed = false;
-  nextCalibrateStep = 2;
-}
+  image(currentCalibIntro, width / 2, height / 2, width, height);
+
+  if (
+    !introFinished &&
+    currentCalibIntro.getCurrentFrame() >=
+      currentCalibIntro.numFrames() - 2
+  ) {
+
+    currentCalibIntro.pause();
+
+    introFinished = true;
+    introSoundPlayed = false;
+    nextCalibrateStep = 2;
+  }
 }
 
 function showCalibratehand() {
@@ -1474,7 +1603,7 @@ function isHandRaised() {
 
 // ===== MAIN ANALYSIS =====
 function analyzeScene() {
-  // ===== GUARD (ANTI CRASH) =====
+
   if (!segmentation || hands.length === 0) return;
 
   video.loadPixels();
@@ -1517,7 +1646,7 @@ function analyzeScene() {
       fgB += b;
       fgCount++;
     } 
-    else if (maskValue < 128) { // ✅ FIX (lebih stabil)
+    else if (maskValue < 128) { 
       bgR += r;
       bgG += g;
       bgB += b;
@@ -1550,14 +1679,14 @@ function analyzeScene() {
   bgComplexity = bgCount ? bgDiffSum / bgCount : 0;
 
   // ===== CONDITIONS =====
-  lightStatus = brightnessAvg < 97 ? "dark"
+  lightStatus = brightnessAvg < 95 ? "dark"
                : brightnessAvg > 200 ? "bright"
                : "good";
 
-  isBackgroundBusy = bgComplexity > 5;
+  isBackgroundBusy = bgComplexity > 3;
   goodContrast = contrastRatio >= 1;
 
-  // optional debug (udah clean)
+
   console.log("Brightness:", brightnessAvg.toFixed(1));
   console.log("BG Complexity:", bgComplexity.toFixed(2));
   console.log("Contrast:", contrastRatio.toFixed(2));
@@ -1590,11 +1719,10 @@ function showResultUI() {
 }
 
 function drawTextStroke(str, x, y) {
-  let offset = 0.3; // ketebalan stroke
+  let offset = 0.3;
 
-  fill(0); // warna stroke (misal hitam)
+  fill(0);
 
-  // gambar text di sekeliling (8 arah)
   text(str, x - offset, y);
   text(str, x + offset, y);
   text(str, x, y - offset);
@@ -1655,7 +1783,12 @@ function drawLightLabel(x, y, status) {
 }
 
 function showCalibrateBg() {
+
   image(caliblatar, width / 2, height / 2, width, height);
+    if (showProceedPopup) {
+  drawProceedPopup();
+  return;
+} 
   let raised = hands.length > 0 && isHandRaised();
 
   // ================= INTRO =================
@@ -1699,6 +1832,7 @@ function showCalibrateBg() {
 
       resultStartTime = millis();
       calibratePhase = "result";
+      failRecorded = false;
     }
     return;
   }
@@ -1722,14 +1856,22 @@ function showCalibrateBg() {
         correctSoundPlayed = false;
       }
     } else {
-      // kondisi gagal → tampil feedback merah + bad
-      image(bad, width / 2, height - 82, 588, 112);
 
-      // kalau tangan turun → prompt angkat lagi
-      if (!raised) {
-        calibratePhase = "waitHandUp";
-      }
-    }
+  image(bad, width / 2, height - 82, 588, 112);
+
+if (!raised && !failRecorded) {
+
+        calibrateFailCount++;
+        failRecorded = true;
+
+        if(calibrateFailCount >= 3){
+            showProceedPopup = true;
+        }else{
+            calibratePhase = "waitHandUp";
+        }
+  }
+
+}
     return;
   }
 
@@ -1758,8 +1900,59 @@ function showCalibrateBg() {
     return;
   }
 }
+function drawProceedPopup(){
 
+    fill(0,170);
+    noStroke();
+    rect(0,0,width,height);
+  image(bgwarning,width/2,height/2,535,321);
 
+  image(ngertiButton,width/2, height / 2 + 155,272,60);
+  detectProceedButton();
+}
+function detectProceedButton() {
+
+  if (hands.length > 0) {
+
+    let index = hands[0].keypoints[8];
+    let thumb = hands[0].keypoints[4];
+
+    let distBetweenFingers = dist(index.x, index.y, thumb.x, thumb.y);
+
+    if (distBetweenFingers < 25) {
+
+      let fingersX = (index.x + thumb.x) * 0.5;
+      let fingersY = (index.y + thumb.y) * 0.5;
+
+      if (
+        fingersX > width / 2 - 272 / 2 &&
+        fingersX < width / 2 + 272 / 2 &&
+        fingersY > (height / 2 + 155) - 60 / 2 &&
+        fingersY < (height / 2 + 155) + 60 / 2
+      ) {
+
+        if (!ngertiClicked) {
+
+          ngertiClicked = true;
+
+          click.play();
+
+          showProceedPopup = false;
+          calibrateFailCount = 0;
+          failRecorded = false;
+
+          nextCalibrateStep = 3;
+          calibratePhase = "done";
+        }
+      }
+
+    } else {
+
+      ngertiClicked = false;
+
+    }
+  }
+}
 function showCalibratePick() {
 
   image(calib5, width / 2, height / 2, width, height);
@@ -2064,70 +2257,162 @@ function showCalibrateThrow() {
   }
 }
 
+// function showCalibrateTransition() {
+//   // image(calibtrans, width / 2, height / 2, width, height);
+//   let currentCalibTrans =
+//   selectedCharacter === "bhumi"
+//     ? calibtransBhumi
+//     : calibtransTiwi;
+
+// image(currentCalibTrans, width / 2, height / 2, width, height);
+//   image(mulaiButton, width / 2, height / 2 + 161, 284, 60);
+
+//   // gif transition
+// if (!calibTransPlayed) {
+//   mulaiStartTime = millis(); 
+//   mulaiClicked = false;
+//   mulaiUnlocked = false;
+
+//   currentCalibTrans.reset();
+//   currentCalibTrans.play();
+
+//   if (!transSoundPlayed) {
+//     readytoplay.play(); 
+//     transSoundPlayed = true;
+//   }
+//     calibTransPlayed = true;
+//   }
+
+// if (
+//   currentCalibTrans.getCurrentFrame() ===
+//   currentCalibTrans.numFrames() - 1
+// ) {
+//   currentCalibTrans.pause();
+// }
+
+//   // button main
+
+//   if (!mulaiUnlocked && millis() - mulaiStartTime > mulaiDelay) {
+//     mulaiUnlocked = true;
+//   }
+
+//   if (!mulaiUnlocked) return;
+
+//   console.log("mulaiClicked:", mulaiClicked);
+
+//   if (hands.length > 0) {
+//     let index = hands[0].keypoints[8];
+//     let thumb = hands[0].keypoints[4];
+//     let distBetweenFingers = dist(index.x, index.y, thumb.x, thumb.y);
+//     if (distBetweenFingers < 25) {
+//       let fingersX = (index.x + thumb.x) * 0.5;
+//       let fingersY = (index.y + thumb.y) * 0.5;
+//       if (
+//         fingersX > width / 2 - 284 / 2 &&
+//         fingersX < width / 2 + 284 / 2 &&
+//         fingersY > height / 2 + 161 - 60 / 2 &&
+//         fingersY < height / 2 + 161 + 60 / 2
+//       ) {
+//           if (!mulaiClicked) {
+//     click.play();
+//     mulaiClicked = true;
+//           if (calibrateFromChoose) {
+//             gameState = "choose";
+//           } else {
+//             // loadLevel(currentLevel);
+//             levelLoaded = false;
+//             hasCompletedTutorial = true;
+//             gameState = "play";
+//           }
+          
+//           calibTransPlayed = false;
+//           transSoundPlayed = false;
+//           calibrateFromChoose = false; // reset
+//       }
+//     }
+//     }
+//   }
+// }
+
 function showCalibrateTransition() {
-  image(calibtrans, width / 2, height / 2, width, height);
+
+  let currentCalibTrans;
+
+  if (selectedCharacter === "bhumi") {
+    currentCalibTrans = calibtransBhumi;
+  } else {
+    currentCalibTrans = calibtransAsri;
+  }
+
+  image(currentCalibTrans, width / 2, height / 2, width, height);
   image(mulaiButton, width / 2, height / 2 + 161, 284, 60);
 
-  // gif transition
+  // GIF transition
   if (!calibTransPlayed) {
-    mulaiStartTime = millis(); 
+    mulaiStartTime = millis();
     mulaiClicked = false;
     mulaiUnlocked = false;
 
-    calibtrans.reset();
-    calibtrans.play();
+    currentCalibTrans.reset();
+    currentCalibTrans.play();
 
-  if (!transSoundPlayed) {
-    readytoplay.play(); 
-    transSoundPlayed = true;
-  }
+    if (!transSoundPlayed) {
+      readytoplay.play();
+      transSoundPlayed = true;
+    }
+
     calibTransPlayed = true;
   }
 
-  if (calibtrans.getCurrentFrame() === calibtrans.numFrames() - 1) {
-    calibtrans.pause();
+  if (
+    currentCalibTrans.getCurrentFrame() >=
+    currentCalibTrans.numFrames() - 1
+  ) {
+    currentCalibTrans.pause();
   }
 
-  // button main
-
+  // Unlock tombol mulai
   if (!mulaiUnlocked && millis() - mulaiStartTime > mulaiDelay) {
     mulaiUnlocked = true;
   }
 
   if (!mulaiUnlocked) return;
 
-  console.log("mulaiClicked:", mulaiClicked);
-
   if (hands.length > 0) {
     let index = hands[0].keypoints[8];
     let thumb = hands[0].keypoints[4];
     let distBetweenFingers = dist(index.x, index.y, thumb.x, thumb.y);
+
     if (distBetweenFingers < 25) {
+
       let fingersX = (index.x + thumb.x) * 0.5;
       let fingersY = (index.y + thumb.y) * 0.5;
+
       if (
         fingersX > width / 2 - 284 / 2 &&
         fingersX < width / 2 + 284 / 2 &&
         fingersY > height / 2 + 161 - 60 / 2 &&
         fingersY < height / 2 + 161 + 60 / 2
       ) {
-          if (!mulaiClicked) {
-    click.play();
-    mulaiClicked = true;
+
+        if (!mulaiClicked) {
+
+          click.play();
+          mulaiClicked = true;
+
           if (calibrateFromChoose) {
             gameState = "choose";
           } else {
-            // loadLevel(currentLevel);
             levelLoaded = false;
             hasCompletedTutorial = true;
             gameState = "play";
           }
-          
+
           calibTransPlayed = false;
           transSoundPlayed = false;
-          calibrateFromChoose = false; // reset
+          calibrateFromChoose = false;
+        }
       }
-    }
     }
   }
 }
@@ -2139,12 +2424,12 @@ function gotSegmentationResults(result) {
 function skipIcon() {
   push();
 
-  image(skip, width - 52, 37, 38, 38);
+  image(skip, width - 78, 37, 38, 38);
   fill(255, 255, 255);
   stroke(89, 26, 41);
   strokeWeight(4);
   textSize(12);
-  text("Lewati", width - 52, 71);
+  text("Lewati", width - 78, 71);
 
   pop();
 }
@@ -2161,8 +2446,8 @@ function detectSkipButton() {
       let fingersY = (index.y + thumb.y) * 0.5;
 
       if (
-        fingersX > width - 71 &&
-        fingersX < width - 33 &&
+        fingersX > width - 97 &&
+        fingersX < width - 59 &&
         fingersY > 18 &&
         fingersY < 56
       ) {
@@ -2174,7 +2459,6 @@ function detectSkipButton() {
         }
       }
     } else {
-      // reset saat pinch dilepas
       skipClicked = false;
     }
   }
@@ -2199,6 +2483,110 @@ function startFadeIn() {
   fadeDirection = -1; // langsung fade IN
   fadeAlpha = 255;    // mulai dari hitam
 }
+function updateTooCloseWarning() {
+
+  if (hands.length === 0) {
+    tooCloseStartTime = null;
+    return;
+  }
+
+  let handHeight = getHandBoxHeight(hands[0]);
+
+  let reallyTooClose = handHeight > maxHandHeight * 1.3;
+
+  // tangan terlalu dekat
+  if (reallyTooClose) {
+
+    if (tooCloseStartTime === null) {
+      tooCloseStartTime = millis();
+    }
+
+    // harus dekat selama 1 detik
+    if (
+      millis() - tooCloseStartTime > 1000 &&
+      !showTooCloseWarning &&
+      millis() - lastWarningTime > warningCooldown
+    ) {
+      showTooCloseWarning = true;
+      warningStartTime = millis();
+      lastWarningTime = millis();
+    }
+  }
+
+  else {
+    tooCloseStartTime = null;
+  }
+
+  // auto hide setelah 3 detik
+  if (
+    showTooCloseWarning &&
+    millis() - warningStartTime > warningDuration
+  ) {
+    showTooCloseWarning = false;
+  }
+}
+function drawTooCloseWarning() {
+  
+
+  if (!showTooCloseWarning) {
+    warningPopupX = width + 300;
+    return;
+  }
+
+  let margin = 50;
+
+  // overlay pinggir
+  push();
+
+  noStroke();
+  fill(255, 0, 0, 80);
+
+  rect(0, 0, width, margin);
+  rect(0, height - margin, width, margin);
+
+  rect(0, margin, margin, height - margin * 2);
+  rect(width - margin, margin, margin, height - margin * 2);
+
+  pop();
+
+
+push();
+
+noFill();
+stroke(255, 70, 70);
+strokeWeight(4);
+
+drawingContext.setLineDash([12, 8]);
+
+rect(
+  margin,
+  margin,
+  width - margin * 2,
+  height - margin * 2
+);
+
+drawingContext.setLineDash([]);
+
+pop();
+
+let popupW = 136;
+  let popupH = 47;
+
+  // target posisi di samping kanan frame merah
+  popupTargetX = width - margin - 25;
+
+  // animasi masuk dari kanan
+  warningPopupX = lerp(warningPopupX, popupTargetX, 0.12);
+
+  image(
+    mundurPopup,
+    warningPopupX,
+    margin + 100,
+    popupW,
+    popupH
+  );
+}
+
 // draw levelgame
 function playGame() {
   if (gameState !== "play") return;
@@ -2407,9 +2795,18 @@ if (selectedArea && areaLevels[selectedArea]) {
 function getImpactImage() {
   let tier = getScoreTier();
 
-  if (tier === "high") return impactGood;
-  if (tier === "mid") return impactMid;
-  return impactBad;
+  if (selectedCharacter === "bhumi") {
+
+    if (tier === "high") return impactGoodBhumi;
+    if (tier === "mid") return impactMidBhumi;
+    return impactBadBhumi;
+
+  } else {
+
+    if (tier === "high") return impactGoodAsri;
+    if (tier === "mid") return impactMidAsri;
+    return impactBadAsri;
+}
 }
 
 function getImpactText() {
@@ -2596,26 +2993,7 @@ function loadLevel(level) {
   } else if (level === 9) {
     correctHint = 4;
   }
-  //   trial hehe
-  // if (level === 1) {
-  //   correctHint = 2;
-  // } else if (level === 2) {
-  //   correctHint = 1;
-  // } else if (level === 3) {
-  //   correctHint = 1;
-  // } else if (level === 4) {
-  //   correctHint = 1;
-  // } else if (level === 5) {
-  //   correctHint = 1;
-  // } else if (level === 6) {
-  //   correctHint = 1;
-  // } else if (level === 7) {
-  //   correctHint = 1;
-  // } else if (level === 8) {
-  //   correctHint = 1;
-  // } else if (level === 9) {
-  //   correctHint = 1;
-  // }
+ 
   // dapur
   if (level === 1) {
     bins = [
@@ -3053,12 +3431,12 @@ function loadLevel(level) {
 function jedaIcon() {
   push();
 
-  image(jeda, width - 52, 37, 38, 38);
+  image(jeda, width - 78, 37, 38, 38);
   fill(255, 255, 255);
   stroke(89, 26, 41);
   strokeWeight(4);
   textSize(12);
-  text("Jeda", width - 52, 71);
+  text("Jeda", width - 78, 71);
 
   pop();
 
@@ -3073,12 +3451,12 @@ function jedaIcon() {
       let fingersX = (index.x + thumb.x) * 0.5;
       let fingersY = (index.y + thumb.y) * 0.5;
       if (
-        fingersX > width - 71 &&
-        fingersX < width - 33 &&
+        fingersX > width - 97 &&
+        fingersX < width - 59 &&
         fingersY > 18 &&
         fingersY < 56
       ) {
-        image(jeda, width - 52, 37, 43, 43);
+        image(jeda, width - 78, 37, 43, 43);
         let now = millis();
 
         if (now - lastJedaTime > jedaCooldown) {
@@ -3110,13 +3488,13 @@ function promptHint() {
 function hintIcon() {
   push();
 
-  image(bantuan, width - 120, 37, 39, 38);
+  image(bantuan, width - 146, 37, 39, 38);
 
   fill(255, 255, 255);
   stroke(89, 26, 41);
   strokeWeight(4);
   textSize(12);
-  text("Bantuan", width - 120, 71);
+  text("Bantuan", width - 146, 71);
 
   pop();
   if (gameState !== "play") return;
@@ -3130,12 +3508,12 @@ function hintIcon() {
       let fingersX = (index.x + thumb.x) * 0.5;
       let fingersY = (index.y + thumb.y) * 0.5;
       if (
-        fingersX > width - 139 &&
-        fingersX < width - 100 &&
+        fingersX > width - 165.5 &&
+        fingersX < width - 126.5 &&
         fingersY > 18 &&
         fingersY < 56
       ) {
-        image(bantuan, width - 120, 37, 44, 43);
+        image(bantuan, width - 146, 37, 44, 43);
         let now = millis();
 
         if (now - lastHintTime > hintCooldown) {
@@ -3316,8 +3694,19 @@ function displayHint() {
   }
 }
 
+// function getCurrentHint() {
+//   return hintContents[currentLevel];
+// }
 function getCurrentHint() {
-  return hintContents[currentLevel];
+
+  if(selectedCharacter === "bhumi"){
+    return hintContents[currentLevel];
+  }
+
+  if(selectedCharacter === "pertiwi"){
+    return hintContentsTiwi[currentLevel];
+  }
+
 }
 function getCurrentReward() {
   return rewardLevels[currentLevel];
@@ -3609,12 +3998,12 @@ function tutorIcon(){
 
   push();
 
-  image(tutor, width - 52, 37, 38, 38);
+  image(tutor, width - 78, 37, 38, 38);
   fill(255, 255, 255);
   stroke(89, 26, 41);
   strokeWeight(4);
   textSize(12);
-  text("Tutorial", width - 52, 71);
+  text("Tutorial", width - 78, 71);
 
   pop();
 
@@ -3627,12 +4016,12 @@ function tutorIcon(){
       let fingersX = (index.x + thumb.x) * 0.5;
       let fingersY = (index.y + thumb.y) * 0.5;
       if (
-        fingersX > width - 71 &&
-        fingersX < width - 33 &&
+        fingersX > width - 97 &&
+        fingersX < width - 59 &&
         fingersY > 18 &&
         fingersY < 56
       ) {
-        image(tutor, width - 52, 37, 43, 43);
+        image(tutor, width - 78, 37, 38, 38);
 
         tutorCooldown = true;
 
@@ -3655,12 +4044,12 @@ function berandaIcon(){
 
   push();
 
-  image(beranda, 52, 37, 37, 38);
+  image(beranda, 78, 37, 37, 38);
   fill(255, 255, 255);
   stroke(89, 26, 41);
   strokeWeight(4);
   textSize(12);
-  text("Beranda", 52, 71);
+  text("Beranda", 78, 71);
 
   pop();
 
@@ -3673,15 +4062,15 @@ function berandaIcon(){
       let fingersY = (index.y + thumb.y) * 0.5;
       if (
         fingersX > 34 &&
-        fingersX < 71 &&
-        fingersY > 18 &&
-        fingersY < 56
+        fingersX < 115 &&
+        fingersY > 37 &&
+        fingersY < 75
       ) {
        berandaCooldown = true;
 
       //  song.stop();
 
-  image(beranda, 52, 37, 43, 43);
+  image(beranda, 78, 37, 43, 43);
 
   resetGameVariables();
   gameState = "landing";
