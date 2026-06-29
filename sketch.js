@@ -485,9 +485,9 @@ function preload() {
   impactMidBhumi  = loadImage("win/MIDIMPACT.gif");   
   impactBadBhumi  = loadImage("win/BANJIR.gif");   
   
-  impactGoodAsri = loadImage("win/WINBEST_ASRI.png"); 
-  impactMidAsri  = loadImage("win/WINMID_ASRI.png");   
-  impactBadAsri  = loadImage("win/WINBAD_ASRI.png"); 
+  impactGoodAsri = loadImage("win/WINBEST_ASRI.gif"); 
+  impactMidAsri  = loadImage("win/WINMID_ASRI.gif");   
+  impactBadAsri  = loadImage("win/WINBAD_ASRI.gif"); 
   // tombol ke win screen
   lihatskor = loadImage("ui/LIATSKOR_BUTTON.png");
 
@@ -725,7 +725,7 @@ function draw() {
     if (fadeAlpha >= 255) {
       fadeAlpha = 255;
       gameState = nextState;
-      fadeDirection = -1; // mulai fade in
+      fadeDirection = -1; 
     }
 
     if (fadeAlpha <= 0 && fadeDirection === -1) {
@@ -1132,7 +1132,7 @@ let bottom = top + safeBoxHeight;
       maxY = max(p.y, maxY);
     }
 
-    // ======== HITUNG DISTANCE (HEIGHT) ========
+   
     let handHeight = maxY - minY;
 
 
@@ -1155,7 +1155,7 @@ let bottom = top + safeBoxHeight;
     } else {
 
       // ===== DISTANCE FEEDBACK =====
-      let optimalValue = 200;  // nanti ganti pakai data kamu
+      let optimalValue = 200;  
       let tolerance = 15;
 
       let minHandHeight = optimalValue - tolerance;
@@ -1211,14 +1211,36 @@ if (holdTime >= holdDuration) {
     }
   }
 
-  // ================= SAFEZONE DRAW =================
+// ================= SAFEZONE DRAW =================
 
-stroke(boxColor);
-strokeWeight(3);
-drawingContext.setLineDash([10, 10]);
+push();
+
+
+noStroke();
+fill(red(boxColor), green(boxColor), blue(boxColor), 70);
+
+
+rect(0, 0, width, top);
+rect(0, bottom, width, height - bottom);
+rect(0, top, left, safeBoxHeight);
+rect(right, top, width - right, safeBoxHeight);
+
+pop();
+
+push();
+
+
 noFill();
+stroke(boxColor);
+strokeWeight(4);
+
+drawingContext.setLineDash([12, 8]);
+
 rect(left, top, safeBoxWidth, safeBoxHeight);
+
 drawingContext.setLineDash([]);
+
+pop();
 
   image(calib1, width / 2, height / 2, width, height);
 
@@ -1385,13 +1407,42 @@ handMessage = "";
     }
   }
 }
-// SAFEZONE
-stroke(boxColor);
-strokeWeight(3);
-drawingContext.setLineDash([10, 10]);
+// ================= SAFEZONE DRAW =================
+
+push();
+
+
+noStroke();
+fill(red(boxColor), green(boxColor), blue(boxColor), 70);
+
+// Top
+rect(0, 0, width, top);
+
+// Bottom
+rect(0, bottom, width, height - bottom);
+
+// Left
+rect(0, top, left, safeBoxHeight);
+
+// Right
+rect(right, top, width - right, safeBoxHeight);
+
+pop();
+
+push();
+
+
 noFill();
+stroke(boxColor);
+strokeWeight(4);
+
+drawingContext.setLineDash([12, 8]);
+
 rect(left, top, safeBoxWidth, safeBoxHeight);
+
 drawingContext.setLineDash([]);
+
+pop();
 
 image(calib3, width / 2, height / 2, width, height);
 
@@ -1558,13 +1609,42 @@ handMessage = "";
   }
 }
 
-// SAFEZONE
-stroke(boxColor);
-strokeWeight(3);
-drawingContext.setLineDash([10, 10]);
+// ================= SAFEZONE DRAW =================
+
+push();
+
+// Overlay di luar safe zone
+noStroke();
+fill(red(boxColor), green(boxColor), blue(boxColor), 70);
+
+// Top
+rect(0, 0, width, top);
+
+// Bottom
+rect(0, bottom, width, height - bottom);
+
+// Left
+rect(0, top, left, safeBoxHeight);
+
+// Right
+rect(right, top, width - right, safeBoxHeight);
+
+pop();
+
+push();
+
+// Frame putus-putus
 noFill();
+stroke(boxColor);
+strokeWeight(4);
+
+drawingContext.setLineDash([12, 8]);
+
 rect(left, top, safeBoxWidth, safeBoxHeight);
+
 drawingContext.setLineDash([]);
+
+pop();
 
 image(calib4, width / 2, height / 2, width, height);
   // TEXT
@@ -2535,7 +2615,7 @@ function drawTooCloseWarning() {
 
   let margin = 50;
 
-  // overlay pinggir
+
   push();
 
   noStroke();
@@ -2572,10 +2652,8 @@ pop();
 let popupW = 136;
   let popupH = 47;
 
-  // target posisi di samping kanan frame merah
   popupTargetX = width - margin - 25;
 
-  // animasi masuk dari kanan
   warningPopupX = lerp(warningPopupX, popupTargetX, 0.12);
 
   image(
